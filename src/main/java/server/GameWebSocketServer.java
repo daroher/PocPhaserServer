@@ -82,11 +82,23 @@ public class GameWebSocketServer {
 			}
 			break;
 		}
-		case ServerEvents.MUEVO_JUGADOR:{
-		
-			System.out.println("Mueve " + data);
-			break;
+		case ServerEvents.MUEVO_JUGADOR: {
+		    System.out.println("Mueve " + data);
+
+		    synchronized (sessions) {
+		        for (Session session : sessions) {
+		            if (session.isOpen() && !session.equals(senderSession)) { 
+		                try {
+		                    session.getBasicRemote().sendText(data);
+		                } catch (IOException e) {
+		                    e.printStackTrace();
+		                }
+		            }
+		        }
+		    }
+		    break;
 		}
+
 		
 		default:
 			System.err.println("Acción no reconocida: " + action);
