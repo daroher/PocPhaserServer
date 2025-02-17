@@ -82,10 +82,21 @@ public class GameWebSocketServer {
 			}
 			break;
 		}
-		case ServerEvents.MUEVO_JUGADOR:{
-		
-			System.out.println("Mueve " + data);
-			break;
+		case ServerEvents.MUEVO_JUGADOR: {
+		    System.out.println("Mueve " + data);
+
+		    synchronized (sessions) {
+		        for (Session session : sessions) {
+		            if (session.isOpen() && !session.equals(senderSession)) { // No reenvíes al mismo jugador
+		                try {
+		                    session.getBasicRemote().sendText(data); // Enviar la actualización a los demás jugadores
+		                } catch (IOException e) {
+		                    e.printStackTrace();
+		                }
+		            }
+		        }
+		    }
+		    break;
 		}
 		
 		default:

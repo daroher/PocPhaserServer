@@ -8,8 +8,8 @@
 	<classpathentry kind="src" path="src/main/java"/>
 	<classpathentry kind="con" path="org.eclipse.jst.j2ee.internal.web.container"/>
 	<classpathentry kind="con" path="org.eclipse.jst.j2ee.internal.module.container"/>
-	<classpathentry kind="lib" path="C:/Users/brand/Downloads/Java-WebSocket-1.6.0.jar"/>
-	<classpathentry kind="lib" path="C:/Users/brand/Downloads/javax.websocket-api-1.1.jar"/>
-	<classpathentry kind="lib" path="C:/Users/brand/Downloads/gson-2.12.1.jar"/>
+	<classpathentry kind="lib" path="lib/gson-2.12.1.jar"/>
+	<classpathentry kind="lib" path="lib/Java-WebSocket-1.6.0.jar"/>
+	<classpathentry kind="lib" path="lib/javax.websocket-api-1.1.jar"/>
 	<classpathentry kind="output" path="build/classes"/>
 </classpath>
