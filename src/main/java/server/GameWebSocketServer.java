@@ -87,9 +87,9 @@ public class GameWebSocketServer {
 
 		    synchronized (sessions) {
 		        for (Session session : sessions) {
-		            if (session.isOpen() && !session.equals(senderSession)) { // No reenvíes al mismo jugador
+		            if (session.isOpen() && !session.equals(senderSession)) { 
 		                try {
-		                    session.getBasicRemote().sendText(data); // Enviar la actualización a los demás jugadores
+		                    session.getBasicRemote().sendText(data);
 		                } catch (IOException e) {
 		                    e.printStackTrace();
 		                }
@@ -98,6 +98,7 @@ public class GameWebSocketServer {
 		    }
 		    break;
 		}
+
 		
 		default:
 			System.err.println("Acción no reconocida: " + action);
