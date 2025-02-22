@@ -62,27 +62,31 @@ public class GameWebSocketServer {
 
 	@OnClose
 	public void onClose(Session session) {
-		sessions.remove(session);
+	    sessions.remove(session);
 
-		String playerId = session.getId();
-		Player player = players.get(playerId);
+	    String playerId = session.getId();
+	    Player player = players.get(playerId);
 
-		if (player != null) {
-			String teamName = player.getTeam();
-			players.remove(playerId);
+	    if (player != null) {
+	        String teamName = player.getTeam();
+	        players.remove(playerId);
 
-			JsonObject mensaje = new JsonObject();
-			mensaje.addProperty("action", ServerEvents.JUGADOR_DESCONECTADO);
-			mensaje.addProperty("team", teamName);
+	        JsonObject mensaje = new JsonObject();
+	        mensaje.addProperty("action", ServerEvents.JUGADOR_DESCONECTADO);
+	        mensaje.addProperty("team", teamName);
 
-			for (Player otherPlayer : players.values()) {
-				if (!otherPlayer.getSession().getId().equals(playerId)) {
-					sendMessage(otherPlayer.getSession(), mensaje.toString());
-				}
-			}
-		} else {
-			System.out.println("Player no tiene sesión.");
-		}
+	        for (Player otherPlayer : players.values()) {
+	            if (!otherPlayer.getSession().getId().equals(playerId)) {
+	                sendMessage(otherPlayer.getSession(), mensaje.toString());
+	            }
+	        }
+
+	        for (Session activeSession : sessions) {
+	            if (!activeSession.getId().equals(playerId)) {
+	                sendMessage(activeSession, mensaje.toString());
+	            }
+	        }
+	    }
 	}
 
 	private void messageReducer(String action, Session senderSession, String data) {
