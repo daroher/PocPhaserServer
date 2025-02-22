@@ -1,0 +1,75 @@
+package server;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.websocket.Session;
+
+public class Player {
+	private String team;
+	private float x;
+	private float y;
+	private float visionRadius;
+	private int angle;
+	private Session session;
+	private Map<Player, Boolean> inVisionRangeOfPlayers = new HashMap<Player, Boolean>();
+
+	public Player(String id, String team, float x, float y, float visionRadius, Session session, int angle) {
+		this.team = team;
+		this.x = x;
+		this.y = y;
+		this.visionRadius = visionRadius;
+		this.session = session;
+		this.angle = angle;
+	}
+
+	public String getTeam() {
+		return team;
+	}
+
+	public float getX() {
+		return x;
+	}
+
+	public float getY() {
+		return y;
+	}
+
+	public float getVisionRadius() {
+		return visionRadius;
+	}
+
+	public Session getSession() {
+		return session;
+	}
+
+	public void setX(float x) {
+		this.x = x;
+	}
+
+	public void setY(float y) {
+		this.y = y;
+	}
+
+	public void setVisionRadius(float visionRadius) {
+		this.visionRadius = visionRadius;
+	}
+
+	// Verifica si este jugador está dentro del rango de visión de otro jugador
+	public boolean isInVisionRangeOf(Player otherPlayer) {
+		return this.inVisionRangeOfPlayers.getOrDefault(otherPlayer, false);
+	}
+
+	public void setInVisionRangeOf(Player otherPlayer, boolean inRange) {
+		this.inVisionRangeOfPlayers.put(otherPlayer, inRange);
+	}
+
+	public int getAngle() {
+		return this.angle;
+	}
+
+	public void setAngle(int angle) {
+		this.angle = angle;
+	}
+
+}
