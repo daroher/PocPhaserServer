@@ -62,31 +62,31 @@ public class GameWebSocketServer {
 
 	@OnClose
 	public void onClose(Session session) {
-	    sessions.remove(session);
+		sessions.remove(session);
 
-	    String playerId = session.getId();
-	    Player player = players.get(playerId);
+		String playerId = session.getId();
+		Player player = players.get(playerId);
 
-	    if (player != null) {
-	        String teamName = player.getTeam();
-	        players.remove(playerId);
+		if (player != null) {
+			String teamName = player.getTeam();
+			players.remove(playerId);
 
-	        JsonObject mensaje = new JsonObject();
-	        mensaje.addProperty("action", ServerEvents.JUGADOR_DESCONECTADO);
-	        mensaje.addProperty("team", teamName);
+			JsonObject mensaje = new JsonObject();
+			mensaje.addProperty("action", ServerEvents.JUGADOR_DESCONECTADO);
+			mensaje.addProperty("team", teamName);
 
-	        for (Player otherPlayer : players.values()) {
-	            if (!otherPlayer.getSession().getId().equals(playerId)) {
-	                sendMessage(otherPlayer.getSession(), mensaje.toString());
-	            }
-	        }
+			for (Player otherPlayer : players.values()) {
+				if (!otherPlayer.getSession().getId().equals(playerId)) {
+					sendMessage(otherPlayer.getSession(), mensaje.toString());
+				}
+			}
 
-	        for (Session activeSession : sessions) {
-	            if (!activeSession.getId().equals(playerId)) {
-	                sendMessage(activeSession, mensaje.toString());
-	            }
-	        }
-	    }
+			for (Session activeSession : sessions) {
+				if (!activeSession.getId().equals(playerId)) {
+					sendMessage(activeSession, mensaje.toString());
+				}
+			}
+		}
 	}
 
 	private void messageReducer(String action, Session senderSession, String data) {
@@ -97,6 +97,10 @@ public class GameWebSocketServer {
 		case ServerEvents.MUEVO_JUGADOR:
 			handleMovePlayer(senderSession, data);
 			break;
+		case ServerEvents.LLEGA_FRANCIA:
+			handleFindFrance(senderSession, data);
+			break;
+
 		default:
 			System.err.println("Acción no reconocida: " + action);
 			break;
@@ -232,5 +236,35 @@ public class GameWebSocketServer {
 				e.printStackTrace();
 			}
 		}
+	}
+
+	private void handleFindFrance(Session senderSession, String data) {
+		GameEventFrance playerEvent = gson.fromJson(data, GameEventFrance.class);
+		String playerId = senderSession.getId();
+		Player player = players.get(playerId);
+
+		if (player != null) {
+			if (player.getX() == playerEvent.getX() && player.getY() == playerEvent.getY()
+					&& player.getAngle() == playerEvent.getAngle()
+					&& player.getVisionRadius() == playerEvent.getVisionRadius()) {
+
+				float distance = (float) Math.sqrt(Math.pow(playerEvent.getX() - playerEvent.getFranceX(), 2)
+						+ Math.pow(playerEvent.getY() - playerEvent.getFranceY(), 2));
+
+				if (distance <= player.getVisionRadius()) {
+					JsonObject message = new JsonObject();
+					message.addProperty("action", ServerEvents.GANA_PARTIDA);
+					message.addProperty("team", playerEvent.getTeam());
+
+					for (Player p : players.values()) {
+						sendMessage(p.getSession(), message.toString());
+					}
+				}
+
+			} else {
+				System.out.println("Desincronización de coordenadas para el jugador: " + playerId);
+			}
+		}
+
 	}
 }
