@@ -100,6 +100,9 @@ public class GameWebSocketServer {
 		case ServerEvents.LLEGA_FRANCIA:
 			handleFindFrance(senderSession, data);
 			break;
+		case ServerEvents.DISPARO_ACERTADO:
+			handleShoot(senderSession, data);
+			break;
 
 		default:
 			System.err.println("Acción no reconocida: " + action);
@@ -267,4 +270,29 @@ public class GameWebSocketServer {
 		}
 
 	}
+
+	private void handleShoot(Session senderSession, String data) {
+		try {
+			GameEvent shootEvent = gson.fromJson(data, GameEvent.class);
+			String team = shootEvent.getTeam();
+
+			JsonObject victoryMessage = new JsonObject();
+			victoryMessage.addProperty("action", ServerEvents.GANA_PARTIDA);
+			victoryMessage.addProperty("team", team);
+
+			for (Player player : players.values()) {
+				Session session = player.getSession();
+				if (session.isOpen()) {
+					sendMessage(session, victoryMessage.toString());
+				}
+			}
+
+			players.clear();
+			sessions.clear();
+		} catch (Exception e) {
+			e.printStackTrace();
+			sendMessage(senderSession, "Error: " + e.getMessage());
+		}
+	}
+
 }

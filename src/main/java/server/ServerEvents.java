@@ -1,4 +1,4 @@
-    package server;
+package server;
 
 public final class ServerEvents {
 	public static final String NUEVO_JUGADOR = "nuevo_jugador";
@@ -11,6 +11,8 @@ public final class ServerEvents {
 	public static final String INICIA_GUERRA = "inicia_guerra";
 	public static final String LLEGA_FRANCIA = "llega_francia";
 	public static final String GANA_PARTIDA = "gana_partida";
+	public static final String DISPARO_ACERTADO = "disparo_acertado";
 
-    private ServerEvents() {}
+	private ServerEvents() {
+	}
 }
