@@ -103,6 +103,9 @@ public class GameWebSocketServer {
 		case ServerEvents.DISPARO_ACERTADO:
 			handleShoot(senderSession, data);
 			break;
+		case ServerEvents.MUEVO_JUGADOR_GUERRA:
+			handleMovePlayerWar(senderSession, data);
+			break;
 
 		default:
 			System.err.println("Acción no reconocida: " + action);
@@ -293,6 +296,33 @@ public class GameWebSocketServer {
 			e.printStackTrace();
 			sendMessage(senderSession, "Error: " + e.getMessage());
 		}
+	}
+
+	private void handleMovePlayerWar(Session senderSession, String data) {
+		try {
+
+			GameEvent playerEvent = gson.fromJson(data, GameEvent.class);
+			String team = playerEvent.getTeam();
+			float x = playerEvent.getX();
+			float y = playerEvent.getY();
+
+			for (Player player : players.values()) {
+				if (!player.getSession().getId().equals(senderSession.getId())) {
+
+					JsonObject positionMessage = new JsonObject();
+					positionMessage.addProperty("action", ServerEvents.MUEVO_JUGADOR_GUERRA);
+					positionMessage.addProperty("team", team);
+					positionMessage.addProperty("x", x);
+					positionMessage.addProperty("y", y);
+
+					sendMessage(player.getSession(), positionMessage.toString());
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			sendMessage(senderSession, "Error: " + e.getMessage());
+		}
+
 	}
 
 }
