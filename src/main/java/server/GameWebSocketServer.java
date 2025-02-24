@@ -106,6 +106,12 @@ public class GameWebSocketServer {
 		case ServerEvents.MUEVO_JUGADOR_GUERRA:
 			handleMovePlayerWar(senderSession, data);
 			break;
+		case ServerEvents.DISPARO_BALA_BISMARCK:
+			handleBismarckBullet(senderSession, data);
+			break;
+		case ServerEvents.DISPARO_BALA_AVION:
+			handlePlaneBullet(senderSession, data);
+			break;
 
 		default:
 			System.err.println("Acción no reconocida: " + action);
@@ -323,6 +329,46 @@ public class GameWebSocketServer {
 			sendMessage(senderSession, "Error: " + e.getMessage());
 		}
 
+	}
+
+	private void handleBismarckBullet(Session senderSession, String data) {
+		try {
+			GameEvent playerEvent = gson.fromJson(data, GameEvent.class);
+			int angle = playerEvent.getAngle();
+			for (Player player : players.values()) {
+				if (!player.getSession().getId().equals(senderSession.getId())) {
+					JsonObject positionMessage = new JsonObject();
+					positionMessage.addProperty("action", ServerEvents.DISPARO_BALA_BISMARCK);
+					positionMessage.addProperty("angle", angle);
+					sendMessage(player.getSession(), positionMessage.toString());
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			sendMessage(senderSession, "Error: " + e.getMessage());
+		}
+	}
+
+	private void handlePlaneBullet(Session senderSession, String data) {
+		try {
+			GameEvent playerEvent = gson.fromJson(data, GameEvent.class);
+			int angle = playerEvent.getAngle();
+			float x = playerEvent.getX();
+			float y = playerEvent.getY();
+			for (Player player : players.values()) {
+				if (!player.getSession().getId().equals(senderSession.getId())) {
+					JsonObject positionMessage = new JsonObject();
+					positionMessage.addProperty("action", ServerEvents.DISPARO_BALA_AVION);
+					positionMessage.addProperty("angle", angle);
+					positionMessage.addProperty("x", x);
+					positionMessage.addProperty("y", y);
+					sendMessage(player.getSession(), positionMessage.toString());
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			sendMessage(senderSession, "Error: " + e.getMessage());
+		}
 	}
 
 }
