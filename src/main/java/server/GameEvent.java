@@ -7,6 +7,7 @@ public class GameEvent {
 	private float y;
 	private float visionRadius;
 	private int angle;
+	private float relativeAngle;
 
 	public String getAction() {
 		return action;
@@ -30,6 +31,10 @@ public class GameEvent {
 
 	public int getAngle() {
 		return angle;
+	}
+
+	public float getRelativeAngle() {
+		return relativeAngle;
 	}
 
 }

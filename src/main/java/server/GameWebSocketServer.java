@@ -334,7 +334,7 @@ public class GameWebSocketServer {
 	private void handleBismarckBullet(Session senderSession, String data) {
 		try {
 			GameEvent playerEvent = gson.fromJson(data, GameEvent.class);
-			int angle = playerEvent.getAngle();
+			float angle = playerEvent.getRelativeAngle();
 			for (Player player : players.values()) {
 				if (!player.getSession().getId().equals(senderSession.getId())) {
 					JsonObject positionMessage = new JsonObject();
@@ -352,7 +352,7 @@ public class GameWebSocketServer {
 	private void handlePlaneBullet(Session senderSession, String data) {
 		try {
 			GameEvent playerEvent = gson.fromJson(data, GameEvent.class);
-			int angle = playerEvent.getAngle();
+			float angle = playerEvent.getRelativeAngle();
 			float x = playerEvent.getX();
 			float y = playerEvent.getY();
 			for (Player player : players.values()) {
