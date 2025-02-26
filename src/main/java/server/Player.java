@@ -10,11 +10,11 @@ public class Player {
 	private float x;
 	private float y;
 	private float visionRadius;
-	private int angle;
+	private float angle;
 	private Session session;
 	private Map<Player, Boolean> inVisionRangeOfPlayers = new HashMap<Player, Boolean>();
 
-	public Player(String id, String team, float x, float y, float visionRadius, Session session, int angle) {
+	public Player(String id, String team, float x, float y, float visionRadius, Session session, float angle) {
 		this.team = team;
 		this.x = x;
 		this.y = y;
@@ -64,11 +64,11 @@ public class Player {
 		this.inVisionRangeOfPlayers.put(otherPlayer, inRange);
 	}
 
-	public int getAngle() {
+	public float getAngle() {
 		return this.angle;
 	}
 
-	public void setAngle(int angle) {
+	public void setAngle(float angle) {
 		this.angle = angle;
 	}
 

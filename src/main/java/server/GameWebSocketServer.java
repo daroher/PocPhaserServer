@@ -112,6 +112,9 @@ public class GameWebSocketServer {
 		case ServerEvents.DISPARO_BALA_AVION:
 			handlePlaneBullet(senderSession, data);
 			break;
+		case ServerEvents.NUEVO_AVION:
+			handleNewPlane(senderSession, data);
+			break;
 
 		default:
 			System.err.println("Acción no reconocida: " + action);
@@ -169,6 +172,12 @@ public class GameWebSocketServer {
 
 			float distance = (float) Math.sqrt(
 					Math.pow(player.getX() - otherPlayer.getX(), 2) + Math.pow(player.getY() - otherPlayer.getY(), 2));
+
+			System.out.println("x player" + player.getX());
+			System.out.println("y player" + player.getY());
+
+			System.out.println("x other" + otherPlayer.getX());
+			System.out.println("y other" + otherPlayer.getY());
 
 			// Verificar si el jugador actual está dentro del rango del otro jugador
 			if (distance <= player.getVisionRadius()) {
@@ -365,6 +374,39 @@ public class GameWebSocketServer {
 					sendMessage(player.getSession(), positionMessage.toString());
 				}
 			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			sendMessage(senderSession, "Error: " + e.getMessage());
+		}
+	}
+
+	private void handleNewPlane(Session senderSession, String data) {
+		try {
+			GameEvent playerEvent = gson.fromJson(data, GameEvent.class);
+			float x = playerEvent.getX();
+			float y = playerEvent.getY();
+			float angle = playerEvent.getAngle();
+			boolean withPilot = playerEvent.isWithPilot();
+			boolean withObserver = playerEvent.isWithObserver();
+			boolean withOperator = playerEvent.isWithOperator();
+
+			Player player = players.get(senderSession.getId());
+			if (player != null) {
+
+				Plane plane = new Plane(x, y, angle, withPilot, withObserver, withOperator);
+				// Ver como manejar la collecion de aviones
+
+				JsonObject responseMessage = new JsonObject();
+				responseMessage.addProperty("action", ServerEvents.DATOS_AVION);
+				responseMessage.addProperty("x", plane.getPosX());
+				responseMessage.addProperty("y", plane.getPosY());
+				responseMessage.addProperty("visionRadius", plane.getVisionRadius());
+				responseMessage.addProperty("speed", plane.getSpeed());
+				responseMessage.addProperty("angle", plane.getAngle());
+
+				sendMessage(senderSession, responseMessage.toString());
+			}
+
 		} catch (Exception e) {
 			e.printStackTrace();
 			sendMessage(senderSession, "Error: " + e.getMessage());
