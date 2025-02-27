@@ -21,6 +21,8 @@ public class GameWebSocketServer {
 	private static final Gson gson = new Gson();
 	private static final Map<String, Player> players = Collections.synchronizedMap(new HashMap<>());
 	private static final Set<Session> sessions = Collections.synchronizedSet(new HashSet<>());
+	private int cantAviones;
+	private int vidaBismarck;
 
 	@OnOpen
 	public void onOpen(Session session) {
@@ -112,6 +114,9 @@ public class GameWebSocketServer {
 		case ServerEvents.DISPARO_BALA_AVION:
 			handlePlaneBullet(senderSession, data);
 			break;
+		case ServerEvents.NUEVO_AVION:
+			handleNewPlane(senderSession, data);
+			break;
 
 		default:
 			System.err.println("Acción no reconocida: " + action);
@@ -124,6 +129,12 @@ public class GameWebSocketServer {
 		Player player = new Player(senderSession.getId(), playerEvent.getTeam(), playerEvent.getX(), playerEvent.getY(),
 				playerEvent.getVisionRadius(), senderSession, playerEvent.getAngle());
 		players.put(senderSession.getId(), player);
+
+		if ("bismarck".equals(player.getTeam())) {
+			this.vidaBismarck = 3;
+		} else {
+			this.cantAviones = 10;
+		}
 
 		for (Session session : sessions) {
 			if (!session.getId().equals(senderSession.getId())) {
@@ -283,21 +294,18 @@ public class GameWebSocketServer {
 	private void handleShoot(Session senderSession, String data) {
 		try {
 			GameEvent shootEvent = gson.fromJson(data, GameEvent.class);
-			String team = shootEvent.getTeam();
 
-			JsonObject victoryMessage = new JsonObject();
-			victoryMessage.addProperty("action", ServerEvents.GANA_PARTIDA);
-			victoryMessage.addProperty("team", team);
-
-			for (Player player : players.values()) {
-				Session session = player.getSession();
-				if (session.isOpen()) {
-					sendMessage(session, victoryMessage.toString());
+			if ("bismarck".equals(shootEvent.getTeam())) {
+				if (this.cantAviones > 0) {
+					this.cantAviones--;
+				}
+			} else {
+				if (this.vidaBismarck > 0) {
+					this.vidaBismarck--;
 				}
 			}
 
-			players.clear();
-			sessions.clear();
+			checkVictory();
 		} catch (Exception e) {
 			e.printStackTrace();
 			sendMessage(senderSession, "Error: " + e.getMessage());
@@ -369,6 +377,61 @@ public class GameWebSocketServer {
 			e.printStackTrace();
 			sendMessage(senderSession, "Error: " + e.getMessage());
 		}
+	}
+
+	private void handleNewPlane(Session senderSession, String data) {
+		try {
+			GameEvent playerEvent = gson.fromJson(data, GameEvent.class);
+			float x = playerEvent.getX();
+			float y = playerEvent.getY();
+			float angle = playerEvent.getAngle();
+			boolean withPilot = playerEvent.isWithPilot();
+			boolean withObserver = playerEvent.isWithObserver();
+			boolean withOperator = playerEvent.isWithOperator();
+
+			Player player = players.get(senderSession.getId());
+			if (player != null) {
+
+				Plane plane = new Plane(x, y, angle, withPilot, withObserver, withOperator);
+				// Ver como manejar la collecion de aviones
+
+				JsonObject responseMessage = new JsonObject();
+				responseMessage.addProperty("action", ServerEvents.DATOS_AVION);
+				responseMessage.addProperty("x", plane.getPosX());
+				responseMessage.addProperty("y", plane.getPosY());
+				responseMessage.addProperty("visionRadius", plane.getVisionRadius());
+				responseMessage.addProperty("speed", plane.getSpeed());
+				responseMessage.addProperty("angle", plane.getAngle());
+
+				sendMessage(senderSession, responseMessage.toString());
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			sendMessage(senderSession, "Error: " + e.getMessage());
+		}
+	}
+
+	private void checkVictory() {
+		if (this.cantAviones == 0 || this.vidaBismarck == 0) {
+			String team = (this.cantAviones == 0) ? "bismarck" : "britanicos";
+			sendVictoryMessage(team);
+		}
+	}
+
+	private void sendVictoryMessage(String team) {
+		JsonObject victoryMessage = new JsonObject();
+		victoryMessage.addProperty("action", ServerEvents.GANA_PARTIDA);
+		victoryMessage.addProperty("team", team);
+
+		for (Player player : players.values()) {
+			if (player.getSession().isOpen()) {
+				sendMessage(player.getSession(), victoryMessage.toString());
+			}
+		}
+
+		players.clear();
+		sessions.clear();
 	}
 
 }

@@ -15,6 +15,8 @@ public final class ServerEvents {
 	public static final String MUEVO_JUGADOR_GUERRA = "muevo_jugador_guerra";
 	public static final String DISPARO_BALA_BISMARCK = "disparo_bala_bismarck";
 	public static final String DISPARO_BALA_AVION = "disparo_bala_avion";
+	public static final String NUEVO_AVION = "nuevo_avion";
+	public static final String DATOS_AVION = "datos_avion";
 
 	private ServerEvents() {
 	}
