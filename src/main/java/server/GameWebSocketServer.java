@@ -21,6 +21,8 @@ public class GameWebSocketServer {
 	private static final Gson gson = new Gson();
 	private static final Map<String, Player> players = Collections.synchronizedMap(new HashMap<>());
 	private static final Set<Session> sessions = Collections.synchronizedSet(new HashSet<>());
+	private int cantAviones;
+	private int vidaBismarck;
 
 	@OnOpen
 	public void onOpen(Session session) {
@@ -128,6 +130,12 @@ public class GameWebSocketServer {
 				playerEvent.getVisionRadius(), senderSession, playerEvent.getAngle());
 		players.put(senderSession.getId(), player);
 
+		if ("bismarck".equals(player.getTeam())) {
+			this.vidaBismarck = 3;
+		} else {
+			this.cantAviones = 10;
+		}
+
 		for (Session session : sessions) {
 			if (!session.getId().equals(senderSession.getId())) {
 				sendMessage(session, data);
@@ -172,12 +180,6 @@ public class GameWebSocketServer {
 
 			float distance = (float) Math.sqrt(
 					Math.pow(player.getX() - otherPlayer.getX(), 2) + Math.pow(player.getY() - otherPlayer.getY(), 2));
-
-			System.out.println("x player" + player.getX());
-			System.out.println("y player" + player.getY());
-
-			System.out.println("x other" + otherPlayer.getX());
-			System.out.println("y other" + otherPlayer.getY());
 
 			// Verificar si el jugador actual está dentro del rango del otro jugador
 			if (distance <= player.getVisionRadius()) {
@@ -292,21 +294,18 @@ public class GameWebSocketServer {
 	private void handleShoot(Session senderSession, String data) {
 		try {
 			GameEvent shootEvent = gson.fromJson(data, GameEvent.class);
-			String team = shootEvent.getTeam();
 
-			JsonObject victoryMessage = new JsonObject();
-			victoryMessage.addProperty("action", ServerEvents.GANA_PARTIDA);
-			victoryMessage.addProperty("team", team);
-
-			for (Player player : players.values()) {
-				Session session = player.getSession();
-				if (session.isOpen()) {
-					sendMessage(session, victoryMessage.toString());
+			if ("bismarck".equals(shootEvent.getTeam())) {
+				if (this.cantAviones > 0) {
+					this.cantAviones--;
+				}
+			} else {
+				if (this.vidaBismarck > 0) {
+					this.vidaBismarck--;
 				}
 			}
 
-			players.clear();
-			sessions.clear();
+			checkVictory();
 		} catch (Exception e) {
 			e.printStackTrace();
 			sendMessage(senderSession, "Error: " + e.getMessage());
@@ -411,6 +410,28 @@ public class GameWebSocketServer {
 			e.printStackTrace();
 			sendMessage(senderSession, "Error: " + e.getMessage());
 		}
+	}
+
+	private void checkVictory() {
+		if (this.cantAviones == 0 || this.vidaBismarck == 0) {
+			String team = (this.cantAviones == 0) ? "bismarck" : "britanicos";
+			sendVictoryMessage(team);
+		}
+	}
+
+	private void sendVictoryMessage(String team) {
+		JsonObject victoryMessage = new JsonObject();
+		victoryMessage.addProperty("action", ServerEvents.GANA_PARTIDA);
+		victoryMessage.addProperty("team", team);
+
+		for (Player player : players.values()) {
+			if (player.getSession().isOpen()) {
+				sendMessage(player.getSession(), victoryMessage.toString());
+			}
+		}
+
+		players.clear();
+		sessions.clear();
 	}
 
 }
