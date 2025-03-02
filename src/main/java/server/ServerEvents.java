@@ -18,6 +18,7 @@ public final class ServerEvents {
 	public static final String NUEVO_AVION = "nuevo_avion";
 	public static final String DATOS_AVION = "datos_avion";
 	public static final String MUEVO_JUGADOR_VENTAJA = "muevo_jugador_ventaja";
+	public static final String INICIA_VENTAJA = "inicia_ventaja";
 
 	private ServerEvents() {
 	}
