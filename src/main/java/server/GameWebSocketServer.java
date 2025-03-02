@@ -119,7 +119,9 @@ public class GameWebSocketServer {
 			break;
 		case ServerEvents.SELECCION_POSICION_PORTAAVIONES:
 			handleAircraftCarrierPositionSelection(senderSession, data);
-
+		case ServerEvents.MUEVO_JUGADOR_VENTAJA:
+			handleMovePlayerSideview(senderSession, data);
+			break;
 		default:
 			System.err.println("Acción no reconocida: " + action);
 			break;
@@ -213,16 +215,16 @@ public class GameWebSocketServer {
 
 	private void notifyPlayerInRange(Player observer, Player target) {
 		try {
-			JsonObject message = new JsonObject();
-			message.addProperty("action", ServerEvents.JUGADOR_EN_RANGO);
-			message.addProperty("x", target.getX());
-			message.addProperty("y", target.getY());
-			message.addProperty("team", target.getTeam());
-			message.addProperty("angle", target.getAngle());
-			message.addProperty("distance", Math
+			JsonObject messageInRange = new JsonObject();
+			messageInRange.addProperty("action", ServerEvents.JUGADOR_EN_RANGO);
+			messageInRange.addProperty("x", target.getX());
+			messageInRange.addProperty("y", target.getY());
+			messageInRange.addProperty("team", target.getTeam());
+			messageInRange.addProperty("angle", target.getAngle());
+			messageInRange.addProperty("distance", Math
 					.sqrt(Math.pow(observer.getX() - target.getX(), 2) + Math.pow(observer.getY() - target.getY(), 2)));
 
-			sendMessage(observer.getSession(), message.toString());
+			sendMessage(observer.getSession(), messageInRange.toString());
 
 			// Mensaje de guerra
 			JsonObject guerraMessage = new JsonObject();
@@ -459,5 +461,34 @@ public class GameWebSocketServer {
 		players.clear();
 		sessions.clear();
 	}
+
+	private void handleMovePlayerSideview(Session senderSession, String data) {
+		try {
+
+			GameEvent playerEvent = gson.fromJson(data, GameEvent.class);
+			String team = playerEvent.getTeam();
+			float x = playerEvent.getX();
+			float y = playerEvent.getY();
+			
+			for (Player player : players.values()) {
+				System.out.println("player" + player.getTeam());
+				if (!player.getSession().getId().equals(senderSession.getId())) {
+
+					JsonObject positionMessage = new JsonObject();
+					positionMessage.addProperty("action", ServerEvents.MUEVO_JUGADOR_VENTAJA);
+					positionMessage.addProperty("team", team);
+					positionMessage.addProperty("x", x);
+					positionMessage.addProperty("y", y);
+
+					System.out.println("envio evento");
+					sendMessage(player.getSession(), positionMessage.toString());
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			sendMessage(senderSession, "Error: " + e.getMessage());
+		}
+	}
+
 
 }
