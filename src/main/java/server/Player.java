@@ -15,7 +15,7 @@ public class Player {
 	private Map<Player, Boolean> inVisionRangeOfPlayers = new HashMap<Player, Boolean>();
 	private boolean withObserver;
 
-	public Player(String id, String team, float x, float y, float visionRadius, Session session, float angle, boolean withObserver) {
+	public Player(String id, String team, float x, float y, float visionRadius, Session session, float angle) {
 		this.team = team;
 		this.x = x;
 		this.y = y;
