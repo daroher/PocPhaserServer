@@ -131,9 +131,10 @@ public class GameWebSocketServer {
 	private void handleNewPlayer(Session senderSession, String data) {
 		GameEvent playerEvent = gson.fromJson(data, GameEvent.class);
 		Player player = new Player(senderSession.getId(), playerEvent.getTeam(), playerEvent.getX(), playerEvent.getY(),
-				playerEvent.getVisionRadius(), senderSession, playerEvent.getAngle());
+				playerEvent.getVisionRadius(), senderSession, playerEvent.getAngle(), playerEvent.isWithObserver());
 		players.put(senderSession.getId(), player);
 
+		//TODO: parametrizar los teams
 		if ("bismarck".equals(player.getTeam())) {
 			this.vidaBismarck = 3;
 		} else {
@@ -226,16 +227,33 @@ public class GameWebSocketServer {
 
 			sendMessage(observer.getSession(), messageInRange.toString());
 
-			// Mensaje de guerra
-			JsonObject guerraMessage = new JsonObject();
-			guerraMessage.addProperty("action", ServerEvents.INICIA_GUERRA);
-			guerraMessage.addProperty("startTeam", observer.getTeam());
-			guerraMessage.addProperty("otherTeam", target.getTeam());
-			guerraMessage.addProperty("distance", Math
-					.sqrt(Math.pow(observer.getX() - target.getX(), 2) + Math.pow(observer.getY() - target.getY(), 2)));
-
-			sendMessage(observer.getSession(), guerraMessage.toString());
-			sendMessage(target.getSession(), guerraMessage.toString());
+			//Si el bismrack lo vio, no esta en enfriamiento de ventaja y el avion no tenia observador, entonces es ventaja para bismarck
+			//TODO:implementar cooldown de ventaja
+			if(observer.getTeam().equals("bismarck") && !target.isWithObserver()) {
+				// Mensaje de ventaja
+				JsonObject MessageVentaja = new JsonObject();
+				MessageVentaja.addProperty("action", ServerEvents.INICIA_VENTAJA);
+				MessageVentaja.addProperty("startTeam", observer.getTeam());
+				MessageVentaja.addProperty("otherTeam", target.getTeam());
+				MessageVentaja.addProperty("distance", Math
+						.sqrt(Math.pow(observer.getX() - target.getX(), 2) + Math.pow(observer.getY() - target.getY(), 2)));
+	
+				sendMessage(observer.getSession(), MessageVentaja.toString());
+				sendMessage(target.getSession(), MessageVentaja.toString());
+			}else {			
+			
+				// Mensaje de guerra
+				JsonObject guerraMessage = new JsonObject();
+				guerraMessage.addProperty("action", ServerEvents.INICIA_GUERRA);
+				guerraMessage.addProperty("startTeam", observer.getTeam());
+				guerraMessage.addProperty("otherTeam", target.getTeam());
+				guerraMessage.addProperty("distance", Math
+						.sqrt(Math.pow(observer.getX() - target.getX(), 2) + Math.pow(observer.getY() - target.getY(), 2)));
+	
+				sendMessage(observer.getSession(), guerraMessage.toString());
+				sendMessage(target.getSession(), guerraMessage.toString());
+			}
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
