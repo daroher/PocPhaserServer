@@ -117,6 +117,8 @@ public class GameWebSocketServer {
 		case ServerEvents.NUEVO_AVION:
 			handleNewPlane(senderSession, data);
 			break;
+		case ServerEvents.SELECCION_POSICION_PORTAAVIONES:
+			handleAircraftCarrierPositionSelection(senderSession, data);
 
 		default:
 			System.err.println("Acción no reconocida: " + action);
@@ -406,6 +408,30 @@ public class GameWebSocketServer {
 				sendMessage(senderSession, responseMessage.toString());
 			}
 
+		} catch (Exception e) {
+			e.printStackTrace();
+			sendMessage(senderSession, "Error: " + e.getMessage());
+		}
+	}
+	
+	private void handleAircraftCarrierPositionSelection(Session senderSession, String data) {
+		try {
+			GameEvent playerEvent = gson.fromJson(data, GameEvent.class);
+			float x = playerEvent.getX();
+			float y = playerEvent.getY();
+			for (Player player : players.values()) {
+				if (!player.getSession().getId().equals(senderSession.getId())) {
+					if (players.size() >= 2) {
+						JsonObject mensaje = new JsonObject();
+						mensaje.addProperty("action", ServerEvents.INICIAR_PARTIDA);
+						mensaje.addProperty("x", x);
+						mensaje.addProperty("y", y);
+						for (Player otherPlayer : players.values()) {
+							sendMessage(otherPlayer.getSession(), mensaje.toString());
+						}
+					}					
+				}
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			sendMessage(senderSession, "Error: " + e.getMessage());
