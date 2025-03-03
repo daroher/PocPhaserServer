@@ -123,6 +123,9 @@ public class GameWebSocketServer {
 		case ServerEvents.MUEVO_JUGADOR_VENTAJA:
 			handleMovePlayerSideview(senderSession, data);
 			break;
+		case ServerEvents.FINALIZA_VENTAJA:
+			handleEndSideview(senderSession, data);
+			break;
 		default:
 			System.err.println("Acción no reconocida: " + action);
 			break;
@@ -192,8 +195,9 @@ public class GameWebSocketServer {
 			float distance = (float) Math.sqrt(
 					Math.pow(player.getX() - otherPlayer.getX(), 2) + Math.pow(player.getY() - otherPlayer.getY(), 2));
 
+			
 			// Verificar si el jugador actual está dentro del rango del otro jugador
-			if (distance <= player.getVisionRadius()) {
+			if (distance != 0 && distance <= player.getVisionRadius()) {
 				if (!player.isInVisionRangeOf(otherPlayer)) {
 					player.setInVisionRangeOf(otherPlayer, true);
 					notifyPlayerInRange(player, otherPlayer);
@@ -206,8 +210,7 @@ public class GameWebSocketServer {
 			}
 
 			// Verificar si el otro jugador está dentro del rango del jugador actual
-			if (distance <= otherPlayer.getVisionRadius()) {
-				
+			if (distance != 0 && distance <= otherPlayer.getVisionRadius()) {
 				if (!otherPlayer.isInVisionRangeOf(player)) {
 					otherPlayer.setInVisionRangeOf(player, true);
 					notifyPlayerInRange(otherPlayer, player);
@@ -238,19 +241,21 @@ public class GameWebSocketServer {
 			//Si el bismrack lo vio, no esta en enfriamiento de ventaja y el avion no tenia observador, entonces es ventaja para bismarck
 			//TODO:implementar cooldown de ventaja
 			if(observer.getTeam().equals("bismarck") && !target.isWithObserver()) {
-				// Mensaje de ventaja
+				
+				// Mensaje de ventaja, envio la informacion de sus posiciones para recomponer la vista desde arriba cuando termine la ventaja
 				JsonObject MessageVentaja = new JsonObject();
 				MessageVentaja.addProperty("action", ServerEvents.INICIA_VENTAJA);
 				MessageVentaja.addProperty("startTeam", observer.getTeam());
 				MessageVentaja.addProperty("otherTeam", target.getTeam());
 				MessageVentaja.addProperty("distance", Math
 						.sqrt(Math.pow(observer.getX() - target.getX(), 2) + Math.pow(observer.getY() - target.getY(), 2)));
-	
+				
 				sendMessage(observer.getSession(), MessageVentaja.toString());
 				sendMessage(target.getSession(), MessageVentaja.toString());
 			}else if ((observer.getTeam().equals("britanicos") && observer.isWithObserver())
 					|| (observer.getTeam().equals("bismarck") && target.isWithObserver())){			
-			
+				
+				System.out.println("Guerra");
 				// Mensaje de guerra
 				JsonObject guerraMessage = new JsonObject();
 				guerraMessage.addProperty("action", ServerEvents.INICIA_GUERRA);
@@ -523,4 +528,14 @@ public class GameWebSocketServer {
 	}
 
 
+	private void handleEndSideview(Session senderSession, String data) {
+		for (Player player : players.values()) {
+			JsonObject mensaje = new JsonObject();
+			mensaje.addProperty("action", ServerEvents.VOLVER_VISTA_SUPERIOR);
+			mensaje.addProperty("x", player.getX());
+			mensaje.addProperty("y", player.getY());
+			sendMessage(player.getSession(), mensaje.toString());
+		}
+		
+	}
 }

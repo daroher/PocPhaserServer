@@ -20,6 +20,9 @@ public final class ServerEvents {
 	public static final String SELECCION_POSICION_PORTAAVIONES = "seleccion_posicion_portaaviones";
 	public static final String MUEVO_JUGADOR_VENTAJA = "muevo_jugador_ventaja";
 	public static final String INICIA_VENTAJA = "inicia_ventaja";
+	public static final String FINALIZA_VENTAJA = "finaliza_ventaja";
+	public static final String VOLVER_VISTA_SUPERIOR = "volver_vista_superior";
+	
 
 	private ServerEvents() {
 	}
