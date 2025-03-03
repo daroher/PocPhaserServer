@@ -22,8 +22,8 @@ public class GameWebSocketServer {
 	private static final Gson gson = new Gson();
 	private static final Map<String, Player> players = Collections.synchronizedMap(new HashMap<>());
 	private static final Set<Session> sessions = Collections.synchronizedSet(new HashSet<>());
-	private int cantAviones;
-	private int vidaBismarck;
+	private int cantAviones = 10;
+	private int vidaBismarck = 3;
 
 	@OnOpen
 	public void onOpen(Session session) {
@@ -155,14 +155,6 @@ public class GameWebSocketServer {
 			}
 		}
 
-		if (players.size() >= 2) {
-			JsonObject mensaje = new JsonObject();
-			mensaje.addProperty("action", ServerEvents.INICIAR_PARTIDA);
-
-			for (Player otherPlayer : players.values()) {
-				sendMessage(otherPlayer.getSession(), mensaje.toString());
-			}
-		}
 	}
 
 	private void handleMovePlayer(Session senderSession, String data) {
@@ -330,7 +322,6 @@ public class GameWebSocketServer {
 	private void handleShoot(Session senderSession, String data) {
 		try {
 			GameEvent shootEvent = gson.fromJson(data, GameEvent.class);
-
 			if ("bismarck".equals(shootEvent.getTeam())) {
 				if (this.cantAviones > 0) {
 					this.cantAviones--;
@@ -341,6 +332,19 @@ public class GameWebSocketServer {
 				}
 			}
 
+			for (Player player : players.values()) {
+				JsonObject message = new JsonObject();
+				if ("bismarck".equals(shootEvent.getTeam())) {
+					message.addProperty("action", ServerEvents.AVION_ELIMINADO);
+					message.addProperty("cantAviones", this.cantAviones);
+				} else {
+					message.addProperty("action", ServerEvents.DISPARO_A_BISMARCK);
+					message.addProperty("vidaBismarck", this.vidaBismarck);
+				}
+				
+				sendMessage(player.getSession(), message.toString());
+			}
+			
 			checkVictory();
 		} catch (Exception e) {
 			e.printStackTrace();
