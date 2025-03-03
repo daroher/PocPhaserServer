@@ -119,7 +119,9 @@ public class GameWebSocketServer {
 			break;
 		case ServerEvents.SELECCION_POSICION_PORTAAVIONES:
 			handleAircraftCarrierPositionSelection(senderSession, data);
-
+		case ServerEvents.MUEVO_JUGADOR_VENTAJA:
+			handleMovePlayerSideview(senderSession, data);
+			break;
 		default:
 			System.err.println("Acción no reconocida: " + action);
 			break;
@@ -127,11 +129,16 @@ public class GameWebSocketServer {
 	}
 
 	private void handleNewPlayer(Session senderSession, String data) {
+		
 		GameEvent playerEvent = gson.fromJson(data, GameEvent.class);
+		
+		System.out.println("selecciono:" + playerEvent.isWithObserver());
+		
 		Player player = new Player(senderSession.getId(), playerEvent.getTeam(), playerEvent.getX(), playerEvent.getY(),
 				playerEvent.getVisionRadius(), senderSession, playerEvent.getAngle());
 		players.put(senderSession.getId(), player);
 
+		//TODO: parametrizar los teams
 		if ("bismarck".equals(player.getTeam())) {
 			this.vidaBismarck = 3;
 		} else {
@@ -180,6 +187,7 @@ public class GameWebSocketServer {
 				continue; // Ignorar al mismo jugador
 			}
 
+			
 			float distance = (float) Math.sqrt(
 					Math.pow(player.getX() - otherPlayer.getX(), 2) + Math.pow(player.getY() - otherPlayer.getY(), 2));
 
@@ -198,6 +206,7 @@ public class GameWebSocketServer {
 
 			// Verificar si el otro jugador está dentro del rango del jugador actual
 			if (distance <= otherPlayer.getVisionRadius()) {
+				
 				if (!otherPlayer.isInVisionRangeOf(player)) {
 					otherPlayer.setInVisionRangeOf(player, true);
 					notifyPlayerInRange(otherPlayer, player);
@@ -213,27 +222,46 @@ public class GameWebSocketServer {
 
 	private void notifyPlayerInRange(Player observer, Player target) {
 		try {
-			JsonObject message = new JsonObject();
-			message.addProperty("action", ServerEvents.JUGADOR_EN_RANGO);
-			message.addProperty("x", target.getX());
-			message.addProperty("y", target.getY());
-			message.addProperty("team", target.getTeam());
-			message.addProperty("angle", target.getAngle());
-			message.addProperty("distance", Math
+			JsonObject messageInRange = new JsonObject();
+			messageInRange.addProperty("action", ServerEvents.JUGADOR_EN_RANGO);
+			messageInRange.addProperty("x", target.getX());
+			messageInRange.addProperty("y", target.getY());
+			messageInRange.addProperty("team", target.getTeam());
+			messageInRange.addProperty("angle", target.getAngle());
+			messageInRange.addProperty("distance", Math
 					.sqrt(Math.pow(observer.getX() - target.getX(), 2) + Math.pow(observer.getY() - target.getY(), 2)));
 
-			sendMessage(observer.getSession(), message.toString());
+			sendMessage(observer.getSession(), messageInRange.toString());
 
-			// Mensaje de guerra
-			JsonObject guerraMessage = new JsonObject();
-			guerraMessage.addProperty("action", ServerEvents.INICIA_GUERRA);
-			guerraMessage.addProperty("startTeam", observer.getTeam());
-			guerraMessage.addProperty("otherTeam", target.getTeam());
-			guerraMessage.addProperty("distance", Math
-					.sqrt(Math.pow(observer.getX() - target.getX(), 2) + Math.pow(observer.getY() - target.getY(), 2)));
-
-			sendMessage(observer.getSession(), guerraMessage.toString());
-			sendMessage(target.getSession(), guerraMessage.toString());
+			System.out.println("player:" + observer.getTeam() + "- observer:" + target.isWithObserver());
+			//Si el bismrack lo vio, no esta en enfriamiento de ventaja y el avion no tenia observador, entonces es ventaja para bismarck
+			//TODO:implementar cooldown de ventaja
+			if(observer.getTeam().equals("bismarck") && !target.isWithObserver()) {
+				// Mensaje de ventaja
+				JsonObject MessageVentaja = new JsonObject();
+				MessageVentaja.addProperty("action", ServerEvents.INICIA_VENTAJA);
+				MessageVentaja.addProperty("startTeam", observer.getTeam());
+				MessageVentaja.addProperty("otherTeam", target.getTeam());
+				MessageVentaja.addProperty("distance", Math
+						.sqrt(Math.pow(observer.getX() - target.getX(), 2) + Math.pow(observer.getY() - target.getY(), 2)));
+	
+				sendMessage(observer.getSession(), MessageVentaja.toString());
+				sendMessage(target.getSession(), MessageVentaja.toString());
+			}else if ((observer.getTeam().equals("britanicos") && observer.isWithObserver())
+					|| (observer.getTeam().equals("bismarck") && target.isWithObserver())){			
+			
+				// Mensaje de guerra
+				JsonObject guerraMessage = new JsonObject();
+				guerraMessage.addProperty("action", ServerEvents.INICIA_GUERRA);
+				guerraMessage.addProperty("startTeam", observer.getTeam());
+				guerraMessage.addProperty("otherTeam", target.getTeam());
+				guerraMessage.addProperty("distance", Math
+						.sqrt(Math.pow(observer.getX() - target.getX(), 2) + Math.pow(observer.getY() - target.getY(), 2)));
+	
+				sendMessage(observer.getSession(), guerraMessage.toString());
+				sendMessage(target.getSession(), guerraMessage.toString());
+			}
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -394,6 +422,10 @@ public class GameWebSocketServer {
 			Player player = players.get(senderSession.getId());
 			if (player != null) {
 
+				//actualizo si el player tiene observer
+				player.setWithObserver(withObserver);
+				players.put(senderSession.getId(), player);
+				
 				Plane plane = new Plane(x, y, angle, withPilot, withObserver, withOperator);
 				// Ver como manejar la collecion de aviones
 
@@ -459,5 +491,34 @@ public class GameWebSocketServer {
 		players.clear();
 		sessions.clear();
 	}
+
+	private void handleMovePlayerSideview(Session senderSession, String data) {
+		try {
+
+			GameEvent playerEvent = gson.fromJson(data, GameEvent.class);
+			String team = playerEvent.getTeam();
+			float x = playerEvent.getX();
+			float y = playerEvent.getY();
+			float angle = playerEvent.getAngle();
+			
+			for (Player player : players.values()) {
+				if (!player.getSession().getId().equals(senderSession.getId())) {
+
+					JsonObject positionMessage = new JsonObject();
+					positionMessage.addProperty("action", ServerEvents.MUEVO_JUGADOR_VENTAJA);
+					positionMessage.addProperty("team", team);
+					positionMessage.addProperty("x", x);
+					positionMessage.addProperty("y", y);
+					positionMessage.addProperty("angle", angle);
+
+					sendMessage(player.getSession(), positionMessage.toString());
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			sendMessage(senderSession, "Error: " + e.getMessage());
+		}
+	}
+
 
 }
