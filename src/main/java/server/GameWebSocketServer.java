@@ -12,6 +12,7 @@ import javax.websocket.OnMessage;
 import javax.websocket.OnOpen;
 import javax.websocket.Session;
 import javax.websocket.server.ServerEndpoint;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -117,10 +118,11 @@ public class GameWebSocketServer {
 		case ServerEvents.NUEVO_AVION:
 			handleNewPlane(senderSession, data);
 			break;
+		case ServerEvents.SELECCION_POSICION_PORTAAVIONES:
+			handleAircraftCarrierPositionSelection(senderSession, data);
 		case ServerEvents.MUEVO_JUGADOR_VENTAJA:
 			handleMovePlayerSideview(senderSession, data);
 			break;
-
 		default:
 			System.err.println("Acción no reconocida: " + action);
 			break;
@@ -128,11 +130,16 @@ public class GameWebSocketServer {
 	}
 
 	private void handleNewPlayer(Session senderSession, String data) {
+		
 		GameEvent playerEvent = gson.fromJson(data, GameEvent.class);
+		
+		System.out.println("selecciono:" + playerEvent.isWithObserver());
+		
 		Player player = new Player(senderSession.getId(), playerEvent.getTeam(), playerEvent.getX(), playerEvent.getY(),
 				playerEvent.getVisionRadius(), senderSession, playerEvent.getAngle());
 		players.put(senderSession.getId(), player);
 
+		//TODO: parametrizar los teams
 		if ("bismarck".equals(player.getTeam())) {
 			this.vidaBismarck = 3;
 		} else {
@@ -181,6 +188,7 @@ public class GameWebSocketServer {
 				continue; // Ignorar al mismo jugador
 			}
 
+			
 			float distance = (float) Math.sqrt(
 					Math.pow(player.getX() - otherPlayer.getX(), 2) + Math.pow(player.getY() - otherPlayer.getY(), 2));
 
@@ -199,6 +207,7 @@ public class GameWebSocketServer {
 
 			// Verificar si el otro jugador está dentro del rango del jugador actual
 			if (distance <= otherPlayer.getVisionRadius()) {
+				
 				if (!otherPlayer.isInVisionRangeOf(player)) {
 					otherPlayer.setInVisionRangeOf(player, true);
 					notifyPlayerInRange(otherPlayer, player);
@@ -225,16 +234,35 @@ public class GameWebSocketServer {
 
 			sendMessage(observer.getSession(), messageInRange.toString());
 
-			// Mensaje de guerra
-			JsonObject guerraMessage = new JsonObject();
-			guerraMessage.addProperty("action", ServerEvents.INICIA_GUERRA);
-			guerraMessage.addProperty("startTeam", observer.getTeam());
-			guerraMessage.addProperty("otherTeam", target.getTeam());
-			guerraMessage.addProperty("distance", Math
-					.sqrt(Math.pow(observer.getX() - target.getX(), 2) + Math.pow(observer.getY() - target.getY(), 2)));
-
-			sendMessage(observer.getSession(), guerraMessage.toString());
-			sendMessage(target.getSession(), guerraMessage.toString());
+			System.out.println("player:" + observer.getTeam() + "- observer:" + target.isWithObserver());
+			//Si el bismrack lo vio, no esta en enfriamiento de ventaja y el avion no tenia observador, entonces es ventaja para bismarck
+			//TODO:implementar cooldown de ventaja
+			if(observer.getTeam().equals("bismarck") && !target.isWithObserver()) {
+				// Mensaje de ventaja
+				JsonObject MessageVentaja = new JsonObject();
+				MessageVentaja.addProperty("action", ServerEvents.INICIA_VENTAJA);
+				MessageVentaja.addProperty("startTeam", observer.getTeam());
+				MessageVentaja.addProperty("otherTeam", target.getTeam());
+				MessageVentaja.addProperty("distance", Math
+						.sqrt(Math.pow(observer.getX() - target.getX(), 2) + Math.pow(observer.getY() - target.getY(), 2)));
+	
+				sendMessage(observer.getSession(), MessageVentaja.toString());
+				sendMessage(target.getSession(), MessageVentaja.toString());
+			}else if ((observer.getTeam().equals("britanicos") && observer.isWithObserver())
+					|| (observer.getTeam().equals("bismarck") && target.isWithObserver())){			
+			
+				// Mensaje de guerra
+				JsonObject guerraMessage = new JsonObject();
+				guerraMessage.addProperty("action", ServerEvents.INICIA_GUERRA);
+				guerraMessage.addProperty("startTeam", observer.getTeam());
+				guerraMessage.addProperty("otherTeam", target.getTeam());
+				guerraMessage.addProperty("distance", Math
+						.sqrt(Math.pow(observer.getX() - target.getX(), 2) + Math.pow(observer.getY() - target.getY(), 2)));
+	
+				sendMessage(observer.getSession(), guerraMessage.toString());
+				sendMessage(target.getSession(), guerraMessage.toString());
+			}
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -395,6 +423,10 @@ public class GameWebSocketServer {
 			Player player = players.get(senderSession.getId());
 			if (player != null) {
 
+				//actualizo si el player tiene observer
+				player.setWithObserver(withObserver);
+				players.put(senderSession.getId(), player);
+				
 				Plane plane = new Plane(x, y, angle, withPilot, withObserver, withOperator);
 				// Ver como manejar la collecion de aviones
 
@@ -409,6 +441,30 @@ public class GameWebSocketServer {
 				sendMessage(senderSession, responseMessage.toString());
 			}
 
+		} catch (Exception e) {
+			e.printStackTrace();
+			sendMessage(senderSession, "Error: " + e.getMessage());
+		}
+	}
+	
+	private void handleAircraftCarrierPositionSelection(Session senderSession, String data) {
+		try {
+			GameEvent playerEvent = gson.fromJson(data, GameEvent.class);
+			float x = playerEvent.getX();
+			float y = playerEvent.getY();
+			for (Player player : players.values()) {
+				if (!player.getSession().getId().equals(senderSession.getId())) {
+					if (players.size() >= 2) {
+						JsonObject mensaje = new JsonObject();
+						mensaje.addProperty("action", ServerEvents.INICIAR_PARTIDA);
+						mensaje.addProperty("x", x);
+						mensaje.addProperty("y", y);
+						for (Player otherPlayer : players.values()) {
+							sendMessage(otherPlayer.getSession(), mensaje.toString());
+						}
+					}					
+				}
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			sendMessage(senderSession, "Error: " + e.getMessage());
@@ -444,9 +500,10 @@ public class GameWebSocketServer {
 			String team = playerEvent.getTeam();
 			float x = playerEvent.getX();
 			float y = playerEvent.getY();
+
+			float angle = playerEvent.getAngle();
 			
 			for (Player player : players.values()) {
-				System.out.println("player" + player.getTeam());
 				if (!player.getSession().getId().equals(senderSession.getId())) {
 
 					JsonObject positionMessage = new JsonObject();
@@ -454,8 +511,8 @@ public class GameWebSocketServer {
 					positionMessage.addProperty("team", team);
 					positionMessage.addProperty("x", x);
 					positionMessage.addProperty("y", y);
+					positionMessage.addProperty("angle", angle);
 
-					System.out.println("envio evento");
 					sendMessage(player.getSession(), positionMessage.toString());
 				}
 			}

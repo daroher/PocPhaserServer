@@ -4,3 +4,5 @@
 # Ignore Gradle build output directory
 build\*
 build
+
+.DS_Store
