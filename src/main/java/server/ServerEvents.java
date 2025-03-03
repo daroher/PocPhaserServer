@@ -18,16 +18,12 @@ public final class ServerEvents {
 	public static final String NUEVO_AVION = "nuevo_avion";
 	public static final String DATOS_AVION = "datos_avion";
 	public static final String SELECCION_POSICION_PORTAAVIONES = "seleccion_posicion_portaaviones";
-<<<<<<< Updated upstream
 	public static final String MUEVO_JUGADOR_VENTAJA = "muevo_jugador_ventaja";
 	public static final String INICIA_VENTAJA = "inicia_ventaja";
 	public static final String FINALIZA_VENTAJA = "finaliza_ventaja";
 	public static final String VOLVER_VISTA_SUPERIOR = "volver_vista_superior";
-	
-=======
 	public static final String AVION_ELIMINADO = "avion_eliminado";
 	public static final String DISPARO_A_BISMARCK = "disparo_a_bismarck";
->>>>>>> Stashed changes
 
 	private ServerEvents() {
 	}
