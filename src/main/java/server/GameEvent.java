@@ -105,7 +105,6 @@ public class GameEvent {
 		return count;
 	}
 
-}
 	public float getVsRelativeDistanceX() {
 		return vsRelativeDistanceX;
 	}
