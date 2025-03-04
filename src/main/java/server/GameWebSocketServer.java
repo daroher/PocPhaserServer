@@ -359,6 +359,7 @@ public class GameWebSocketServer {
 			String team = playerEvent.getTeam();
 			float x = playerEvent.getX();
 			float y = playerEvent.getY();
+			float vsDistanceZ = playerEvent.getVsDistanceZ();
 
 			for (Player player : players.values()) {
 				if (!player.getSession().getId().equals(senderSession.getId())) {
@@ -368,6 +369,7 @@ public class GameWebSocketServer {
 					positionMessage.addProperty("team", team);
 					positionMessage.addProperty("x", x);
 					positionMessage.addProperty("y", y);
+					positionMessage.addProperty("vsDistanceZ", vsDistanceZ);
 
 					sendMessage(player.getSession(), positionMessage.toString());
 				}
@@ -383,11 +385,14 @@ public class GameWebSocketServer {
 		try {
 			GameEvent playerEvent = gson.fromJson(data, GameEvent.class);
 			float angle = playerEvent.getRelativeAngle();
+			float vsRelativeDistanceX = playerEvent.getVsRelativeDistanceX();
+			
 			for (Player player : players.values()) {
 				if (!player.getSession().getId().equals(senderSession.getId())) {
 					JsonObject positionMessage = new JsonObject();
 					positionMessage.addProperty("action", ServerEvents.DISPARO_BALA_BISMARCK);
 					positionMessage.addProperty("angle", angle);
+					positionMessage.addProperty("vsRelativeDistanceX", vsRelativeDistanceX);
 					sendMessage(player.getSession(), positionMessage.toString());
 				}
 			}

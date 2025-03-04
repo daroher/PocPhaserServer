@@ -11,6 +11,8 @@ public class GameEvent {
 	private boolean withPilot;
 	private boolean withObserver;
 	private boolean withOperator;
+	private float vsRelativeDistanceX;
+	private float vsDistanceZ;
 
 	public boolean isWithPilot() {
 		return withPilot;
@@ -101,6 +103,23 @@ public class GameEvent {
 		if (withOperator)
 			count++;
 		return count;
+	}
+
+}
+	public float getVsRelativeDistanceX() {
+		return vsRelativeDistanceX;
+	}
+
+	public void setVsRelativeDistanceX(float vsRelativeDistanceX) {
+		this.vsRelativeDistanceX = vsRelativeDistanceX;
+	}
+
+	public float getVsDistanceZ() {
+		return vsDistanceZ;
+	}
+
+	public void setVsDistanceZ(float vsDistanceZ) {
+		this.vsDistanceZ = vsDistanceZ;
 	}
 
 }
