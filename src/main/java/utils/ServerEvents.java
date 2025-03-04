@@ -1,4 +1,4 @@
-package server;
+package utils;
 
 public final class ServerEvents {
 	public static final String NUEVO_JUGADOR = "nuevo_jugador";
