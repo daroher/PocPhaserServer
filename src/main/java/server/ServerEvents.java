@@ -22,7 +22,8 @@ public final class ServerEvents {
 	public static final String INICIA_VENTAJA = "inicia_ventaja";
 	public static final String FINALIZA_VENTAJA = "finaliza_ventaja";
 	public static final String VOLVER_VISTA_SUPERIOR = "volver_vista_superior";
-	
+	public static final String AVION_ELIMINADO = "avion_eliminado";
+	public static final String DISPARO_A_BISMARCK = "disparo_a_bismarck";
 
 	private ServerEvents() {
 	}
