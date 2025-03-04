@@ -471,8 +471,8 @@ public class GameWebSocketServer {
 					if (players.size() >= 2) {
 						JsonObject mensaje = new JsonObject();
 						mensaje.addProperty("action", ServerEvents.INICIAR_PARTIDA);
-						mensaje.addProperty("x", x);
-						mensaje.addProperty("y", y);
+						mensaje.addProperty("carrierX", x);
+						mensaje.addProperty("carrierY", y);
 						for (Player otherPlayer : players.values()) {
 							sendMessage(otherPlayer.getSession(), mensaje.toString());
 						}
