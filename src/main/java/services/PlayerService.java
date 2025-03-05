@@ -16,6 +16,8 @@ import utils.ServerEvents;
 public class PlayerService {
 	private static final Gson gson = new Gson();
 	private JsonObject bismarckLastPos = null;
+	private static final long ADVANTAGE_COOLDOWN_MS = 15000; // 15 segundos de cooldown
+	private long lastAdvantageTime = 0; // Última vez que se activó la ventaja
 
 	public PlayerService() {
 	}
@@ -111,9 +113,7 @@ public class PlayerService {
 
 			System.out.println("player:" + observer.getTeam() + "- observer:" + target.isWithObserver());
 			
-			// Si el bismrack lo vio, no esta en enfriamiento de ventaja y el avion no tenia
-			// observador, entonces es ventaja para bismarck
-			// TODO:implementar cooldown de ventaja
+			
 
 			JsonObject bismarckPos = new JsonObject();
 			if (observer.isWithOperator()) {
@@ -125,7 +125,15 @@ public class PlayerService {
 				bismarckPos.addProperty("y", observer.getY());
 				this.bismarckLastPos = bismarckPos;
 			}
-			if (observer.getTeam().equals("bismarck") && !target.isWithObserver()) {
+			
+			// Si el bismrack lo vio, no esta en enfriamiento de ventaja y el avion no tenia
+			// observador, entonces es ventaja para bismarck
+			long currentTime = System.currentTimeMillis();
+	        if (observer.getTeam().equals("bismarck") && !target.isWithObserver() 
+	                && (currentTime - lastAdvantageTime >= ADVANTAGE_COOLDOWN_MS)) {
+
+	            lastAdvantageTime = currentTime; // Actualizar el tiempo de última activación
+	            
 				JsonObject messageVentaja = new JsonObject();
 				messageVentaja.addProperty("action", ServerEvents.INICIA_VENTAJA);
 				messageVentaja.addProperty("startTeam", observer.getTeam());
