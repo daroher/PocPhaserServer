@@ -1,4 +1,4 @@
-package server;
+package logica;
 
 public class GameEvent {
 	private String action;

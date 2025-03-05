@@ -1,4 +1,4 @@
-package server;
+package logica;
 
 public abstract class GameElement {
 	private float posX;
