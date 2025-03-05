@@ -262,7 +262,6 @@ public class PlayerService {
 					if (currentPlanes > 0) {
 						GameStateService.getInstance().setCantAviones(currentPlanes - 1);
 						
-						System.out.println("cant aviones handle" + GameStateService.getInstance().getCantAviones());
 
 						if (GameStateService.getInstance().getCantAviones() == 0) {
 							GameStateService.getInstance().checkVictory(sessions, players);
