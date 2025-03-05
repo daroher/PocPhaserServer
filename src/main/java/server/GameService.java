@@ -105,6 +105,12 @@ public class GameService {
 		case ServerEvents.CONSULTAR_POSICION_BISMARCK:
 			playerService.handleConsultarPosicionBismarck(senderSession, data);
 			break;
+		case ServerEvents.AVION_SIN_COMBUSTIBLE:
+			playerService.handleAvionSinCombustible(senderSession, data, players, sessions);
+			break;
+		case ServerEvents.SOLICITA_VOLVER_PORTAVIONES:
+			playerService.handleVolverPortaviones(senderSession, data, players);
+			break;
 		default:
 			System.err.println("Acción no reconocida: " + action);
 			break;

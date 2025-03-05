@@ -20,7 +20,8 @@ public class PlayerService {
 	public PlayerService() {
 	}
 
-	public void handleNewPlayer(Session senderSession, String data, Set<Session> sessions, Map<String, Player> players) {
+	public void handleNewPlayer(Session senderSession, String data, Set<Session> sessions,
+			Map<String, Player> players) {
 		GameEvent playerEvent = gson.fromJson(data, GameEvent.class);
 		System.out.println("selecciono:" + playerEvent.isWithObserver());
 
@@ -110,7 +111,7 @@ public class PlayerService {
 			NotificationHelper.sendMessage(observer.getSession(), messageInRange.toString());
 
 			System.out.println("player:" + observer.getTeam() + "- observer:" + target.isWithObserver());
-			
+
 			// Si el bismrack lo vio, no esta en enfriamiento de ventaja y el avion no tenia
 			// observador, entonces es ventaja para bismarck
 			// TODO:implementar cooldown de ventaja
@@ -161,7 +162,7 @@ public class PlayerService {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public void handleMovePlayerWar(Session senderSession, String data, Map<String, Player> players) {
 		try {
 			GameEvent playerEvent = gson.fromJson(data, GameEvent.class);
@@ -223,7 +224,7 @@ public class PlayerService {
 			NotificationHelper.sendMessage(player.getSession(), mensaje.toString());
 		}
 	}
-	
+
 	public void handleConsultarPosicionBismarck(Session senderSession, String data) {
 		try {
 			if (bismarckLastPos != null) {
@@ -240,6 +241,57 @@ public class PlayerService {
 			NotificationHelper.sendMessage(senderSession, "Error: " + e.getMessage());
 		}
 	}
-	
-	
+
+	public void handleAvionSinCombustible(Session senderSession, String data, Map<String, Player> players,
+			Set<Session> sessions) {
+		try {
+			String playerId = senderSession.getId();
+			Player player = players.get(playerId);
+
+			if (player != null) {
+				if ("britanicos".equals(player.getTeam())) {
+					int currentPlanes = GameStateService.getInstance().getCantAviones();
+					if (currentPlanes > 0) {
+						GameStateService.getInstance().setCantAviones(currentPlanes - 1);
+						
+						System.out.println("cant aviones handle" + GameStateService.getInstance().getCantAviones());
+
+						if (GameStateService.getInstance().getCantAviones() == 0) {
+							GameStateService.getInstance().checkVictory(sessions, players);
+						} else {
+							sendVolverPortavionesMessage(senderSession, playerId);
+						}
+					}
+				}
+
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			NotificationHelper.sendMessage(senderSession, "Error: " + e.getMessage());
+		}
+	}
+
+	public void handleVolverPortaviones(Session senderSession, String data, Map<String, Player> players) {
+		try {
+			String playerId = senderSession.getId();
+			Player player = players.get(playerId);
+
+			if (player != null && "britanicos".equals(player.getTeam())) {
+				sendVolverPortavionesMessage(senderSession, playerId);
+
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			NotificationHelper.sendMessage(senderSession, "Error: " + e.getMessage());
+		}
+	}
+
+	private void sendVolverPortavionesMessage(Session session, String playerId) {
+		JsonObject returnMessage = new JsonObject();
+		returnMessage.addProperty("action", ServerEvents.VOLVER_PORTAVIONES);
+		returnMessage.addProperty("playerId", playerId);
+
+		NotificationHelper.sendMessage(session, returnMessage.toString());
+	}
+
 }

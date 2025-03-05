@@ -108,6 +108,7 @@ public class CombatService {
 			if (player != null) {
 				// Actualizamos flag de observer en el jugador
 				player.setWithObserver(withObserver);
+				player.setWithOperator(withOperator);
 				Plane plane = new Plane(x, y, angle, withPilot, withObserver, withOperator);
 
 				JsonObject responseMessage = new JsonObject();
@@ -117,6 +118,8 @@ public class CombatService {
 				responseMessage.addProperty("visionRadius", plane.getVisionRadius());
 				responseMessage.addProperty("speed", plane.getSpeed());
 				responseMessage.addProperty("angle", plane.getAngle());
+			    responseMessage.addProperty("fuelQty", plane.getFuelAmount());
+	            responseMessage.addProperty("fuelConsumptionQty", plane.getFuelConsumptionRate());
 
 				NotificationHelper.sendMessage(senderSession, responseMessage.toString());
 			}
