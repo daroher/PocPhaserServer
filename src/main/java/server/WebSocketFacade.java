@@ -6,12 +6,10 @@ import javax.websocket.OnOpen;
 import javax.websocket.Session;
 import javax.websocket.server.ServerEndpoint;
 
-import com.google.gson.Gson;
-
 @ServerEndpoint("/game")
 public class WebSocketFacade {
-	private static final Gson gson = new Gson();
-	  // Se utiliza el singleton del servicio para mantener el estado compartido
+
+	 // Se utiliza el singleton del servicio para mantener el estado compartido
     private static final GameService gameService = GameService.getInstance();
 
     @OnOpen
