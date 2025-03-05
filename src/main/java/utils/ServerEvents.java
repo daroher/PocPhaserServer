@@ -27,7 +27,6 @@ public final class ServerEvents {
 	public static final String CONSULTAR_POSICION_BISMARCK = "consultar_posicion_bismarck";
 	public static final String DATOS_POSICION_BISMARCK = "datos_posicion_bismarck";
 
-
 	private ServerEvents() {
 	}
 }

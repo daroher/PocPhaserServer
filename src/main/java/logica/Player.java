@@ -91,7 +91,5 @@ public class Player {
 	public void setWithOperator(boolean withOperator) {
 		this.withOperator = withOperator;
 	}
-	
-	
 
 }

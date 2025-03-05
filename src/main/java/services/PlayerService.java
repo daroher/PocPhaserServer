@@ -15,6 +15,7 @@ import utils.ServerEvents;
 
 public class PlayerService {
 	private static final Gson gson = new Gson();
+	private JsonObject bismarckLastPos = null;
 
 	public PlayerService() {
 	}
@@ -109,7 +110,21 @@ public class PlayerService {
 			NotificationHelper.sendMessage(observer.getSession(), messageInRange.toString());
 
 			System.out.println("player:" + observer.getTeam() + "- observer:" + target.isWithObserver());
-			// Lógica para ventaja o guerra
+			
+			// Si el bismrack lo vio, no esta en enfriamiento de ventaja y el avion no tenia
+			// observador, entonces es ventaja para bismarck
+			// TODO:implementar cooldown de ventaja
+
+			JsonObject bismarckPos = new JsonObject();
+			if (observer.isWithOperator()) {
+				bismarckPos.addProperty("x", target.getX());
+				bismarckPos.addProperty("y", target.getY());
+				this.bismarckLastPos = bismarckPos;
+			} else if (target.isWithOperator()) {
+				bismarckPos.addProperty("x", observer.getX());
+				bismarckPos.addProperty("y", observer.getY());
+				this.bismarckLastPos = bismarckPos;
+			}
 			if (observer.getTeam().equals("bismarck") && !target.isWithObserver()) {
 				JsonObject messageVentaja = new JsonObject();
 				messageVentaja.addProperty("action", ServerEvents.INICIA_VENTAJA);
@@ -208,4 +223,23 @@ public class PlayerService {
 			NotificationHelper.sendMessage(player.getSession(), mensaje.toString());
 		}
 	}
+	
+	public void handleConsultarPosicionBismarck(Session senderSession, String data) {
+		try {
+			if (bismarckLastPos != null) {
+				JsonObject responseMessage = new JsonObject();
+				responseMessage.addProperty("action", ServerEvents.DATOS_POSICION_BISMARCK);
+				responseMessage.addProperty("x", bismarckLastPos.get("x").getAsFloat());
+				responseMessage.addProperty("y", bismarckLastPos.get("y").getAsFloat());
+
+				NotificationHelper.sendMessage(senderSession, responseMessage.toString());
+				bismarckLastPos = null;
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			NotificationHelper.sendMessage(senderSession, "Error: " + e.getMessage());
+		}
+	}
+	
+	
 }

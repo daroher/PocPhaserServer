@@ -30,8 +30,6 @@ public class GameService {
 	private PlayerService playerService = new PlayerService();
 	private GameStateService gameStateService = GameStateService.getInstance();
 	private CombatService combatService = new CombatService();
-	private int cantAviones = 10;
-	private int vidaBismarck = 3;
 
 	private GameService() {
 	}
@@ -103,6 +101,9 @@ public class GameService {
 			break;
 		case ServerEvents.FINALIZA_VENTAJA:
 			playerService.handleEndSideview(senderSession, data, players);
+			break;
+		case ServerEvents.CONSULTAR_POSICION_BISMARCK:
+			playerService.handleConsultarPosicionBismarck(senderSession, data);
 			break;
 		default:
 			System.err.println("Acción no reconocida: " + action);
