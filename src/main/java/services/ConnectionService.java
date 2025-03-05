@@ -13,13 +13,11 @@ import utils.NotificationHelper;
 import utils.ServerEvents;
 
 public class ConnectionService {
-	private Map<String, Player> players;
 
-	public ConnectionService(Map<String, Player> players) {
-		this.players = players;
+	public ConnectionService() {
 	}
 
-	public void handleNewConnection(Session session) {
+	public void handleNewConnection(Session session, Map<String, Player> players) {
 		JsonObject mensaje = new JsonObject();
 		mensaje.addProperty("action", ServerEvents.JUGADORES_ACTUALES);
 
@@ -34,7 +32,7 @@ public class ConnectionService {
 		NotificationHelper.sendMessage(session, mensaje.toString());
 	}
 
-	public void handleDisconnection(Session session, Set<Session> sessions) {
+	public void handleDisconnection(Session session, Set<Session> sessions, Map<String, Player> players) {
 		String playerId = session.getId();
 		Player player = players.get(playerId);
 
