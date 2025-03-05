@@ -24,6 +24,9 @@ public final class ServerEvents {
 	public static final String VOLVER_VISTA_SUPERIOR = "volver_vista_superior";
 	public static final String AVION_ELIMINADO = "avion_eliminado";
 	public static final String DISPARO_A_BISMARCK = "disparo_a_bismarck";
+	public static final String CONSULTAR_POSICION_BISMARCK = "consultar_posicion_bismarck";
+	public static final String DATOS_POSICION_BISMARCK = "datos_posicion_bismarck";
+
 
 	private ServerEvents() {
 	}

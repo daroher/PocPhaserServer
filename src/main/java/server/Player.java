@@ -14,6 +14,7 @@ public class Player {
 	private Session session;
 	private Map<Player, Boolean> inVisionRangeOfPlayers = new HashMap<Player, Boolean>();
 	private boolean withObserver;
+	private boolean withOperator;
 
 	public Player(String id, String team, float x, float y, float visionRadius, Session session, float angle) {
 		this.team = team;
@@ -23,6 +24,7 @@ public class Player {
 		this.session = session;
 		this.angle = angle;
 		this.withObserver = withObserver;
+		this.withOperator = withOperator;
 	}
 
 	public String getTeam() {
@@ -81,5 +83,15 @@ public class Player {
 	public void setWithObserver(boolean withObserver) {
 		this.withObserver = withObserver;
 	}
+
+	public boolean isWithOperator() {
+		return withOperator;
+	}
+
+	public void setWithOperator(boolean withOperator) {
+		this.withOperator = withOperator;
+	}
+	
+	
 
 }
