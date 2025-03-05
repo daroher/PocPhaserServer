@@ -1,22 +1,20 @@
-package services;
+package utils;
 
 import java.util.Map;
 
 import com.google.gson.JsonObject;
 
 import logica.Player;
-import utils.NotificationHelper;
-import utils.ServerEvents;
 
-public class VisionService {
-	private static VisionService instance;
+public class VisionHelper {
+	private static VisionHelper instance;
 
-	private VisionService() {
+	private VisionHelper() {
 	}
 
-	public static VisionService getInstance() {
+	public static VisionHelper getInstance() {
 		if (instance == null) {
-			instance = new VisionService();
+			instance = new VisionHelper();
 		}
 		return instance;
 	}

@@ -93,13 +93,17 @@ public class GameStateService {
 			GameEvent playerEvent = new Gson().fromJson(data, GameEvent.class);
 			float x = playerEvent.getX();
 			float y = playerEvent.getY();
-			if (players.size() >= 2) {
-				JsonObject mensaje = new JsonObject();
-				mensaje.addProperty("action", ServerEvents.INICIAR_PARTIDA);
-				mensaje.addProperty("x", x);
-				mensaje.addProperty("y", y);
-				for (Player otherPlayer : players.values()) {
-					NotificationHelper.sendMessage(otherPlayer.getSession(), mensaje.toString());
+			for (Player player : players.values()) {
+				if (!player.getSession().getId().equals(senderSession.getId())) {
+					if (players.size() >= 2) {
+						JsonObject mensaje = new JsonObject();
+						mensaje.addProperty("action", ServerEvents.INICIAR_PARTIDA);
+						mensaje.addProperty("carrierX", x);
+						mensaje.addProperty("carrierY", y);
+						for (Player otherPlayer : players.values()) {
+							NotificationHelper.sendMessage(otherPlayer.getSession(), mensaje.toString());
+						}
+					}					
 				}
 			}
 		} catch (Exception e) {

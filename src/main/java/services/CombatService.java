@@ -16,13 +16,11 @@ import utils.ServerEvents;
 
 public class CombatService {
 	private static final Gson gson = new Gson();
-	private Map<String, Player> players;
 
-	public CombatService(Map<String, Player> players) {
-		this.players = players;
+	public CombatService() {
 	}
 
-	public void handleShoot(Session senderSession, String data, Set<Session> sessions) {
+	public void handleShoot(Session senderSession, String data, Set<Session> sessions, Map<String, Player> players) {
 		try {
 			GameEvent shootEvent = gson.fromJson(data, GameEvent.class);
 			if ("bismarck".equals(shootEvent.getTeam())) {
@@ -54,7 +52,7 @@ public class CombatService {
 		}
 	}
 
-	public void handleBismarckBullet(Session senderSession, String data) {
+	public void handleBismarckBullet(Session senderSession, String data, Map<String, Player> players) {
 		try {
 			GameEvent playerEvent = gson.fromJson(data, GameEvent.class);
 			float angle = playerEvent.getRelativeAngle();
@@ -74,7 +72,7 @@ public class CombatService {
 		}
 	}
 
-	public void handlePlaneBullet(Session senderSession, String data) {
+	public void handlePlaneBullet(Session senderSession, String data, Map<String, Player> players) {
 		try {
 			GameEvent playerEvent = gson.fromJson(data, GameEvent.class);
 			float angle = playerEvent.getRelativeAngle();
@@ -96,7 +94,7 @@ public class CombatService {
 		}
 	}
 
-	public void handleNewPlane(Session senderSession, String data) {
+	public void handleNewPlane(Session senderSession, String data, Map<String, Player> players) {
 		try {
 			GameEvent playerEvent = gson.fromJson(data, GameEvent.class);
 			float x = playerEvent.getX();
