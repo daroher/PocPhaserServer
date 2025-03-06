@@ -32,9 +32,6 @@ public class PlayerService {
 
 		// Se asignan parámetros iniciales según el equipo (podría delegarse en otro
 		// servicio)
-		
-		System.out.println("selecciono:" + player.getTeam());
-
 		if ("bismarck".equals(player.getTeam())) {
 			GameStateService.getInstance().setVidaBismarck(3);
 		} else {
