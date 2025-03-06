@@ -29,6 +29,11 @@ public final class ServerEvents {
 	public static final String AVION_SIN_COMBUSTIBLE = "avion_sin_combustible";
 	public static final String VOLVER_PORTAVIONES = "volver_portaviones";
 	public static final String SOLICITA_VOLVER_PORTAVIONES = "solicita_volver_portaviones";
+	public static final String PAUSAR_JUEGO = "pausar_juego";
+	public static final String REANUDAR_JUEGO = "reanudar_juego";
+	public static final String GUARDAR_JUEGO = "guardar_juego";
+	public static final String CARGAR_JUEGO = "cargar_juego";
+	
 
 	private ServerEvents() {
 	}

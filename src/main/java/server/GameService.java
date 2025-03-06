@@ -111,6 +111,18 @@ public class GameService {
 		case ServerEvents.SOLICITA_VOLVER_PORTAVIONES:
 			playerService.handleVolverPortaviones(senderSession, data, players);
 			break;
+		case ServerEvents.PAUSAR_JUEGO:
+			gameStateService.pauseGame(players);
+			break;
+		case ServerEvents.REANUDAR_JUEGO:
+			gameStateService.resumeGame(players);
+			break;
+		case ServerEvents.GUARDAR_JUEGO:
+			gameStateService.saveGame(players);
+			break;
+		case ServerEvents.CARGAR_JUEGO:
+			gameStateService.loadGame(players);
+			break;
 		default:
 			System.err.println("Acción no reconocida: " + action);
 			break;
