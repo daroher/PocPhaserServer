@@ -25,7 +25,6 @@ public class PlayerService {
 	public void handleNewPlayer(Session senderSession, String data, Set<Session> sessions,
 			Map<String, Player> players) {
 		GameEvent playerEvent = gson.fromJson(data, GameEvent.class);
-		System.out.println("selecciono:" + playerEvent.isWithObserver());
 
 		Player player = new Player(senderSession.getId(), playerEvent.getTeam(), playerEvent.getX(), playerEvent.getY(),
 				playerEvent.getVisionRadius(), senderSession, playerEvent.getAngle());
@@ -33,6 +32,9 @@ public class PlayerService {
 
 		// Se asignan parámetros iniciales según el equipo (podría delegarse en otro
 		// servicio)
+		
+		System.out.println("selecciono:" + player.getTeam());
+
 		if ("bismarck".equals(player.getTeam())) {
 			GameStateService.getInstance().setVidaBismarck(3);
 		} else {

@@ -43,7 +43,7 @@ public class GameService {
 
 	// Manejo de conexión
 	public void onOpen(Session session) {
-		connectionService.handleNewConnection(session, players);
+		connectionService.handleNewConnection(session, players, sessions);
 	}
 
 	// Manejo de mensajes
