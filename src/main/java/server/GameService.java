@@ -43,7 +43,7 @@ public class GameService {
 
 	// Manejo de conexión
 	public void onOpen(Session session) {
-		connectionService.handleNewConnection(session, players);
+		connectionService.handleNewConnection(session, players, sessions);
 	}
 
 	// Manejo de mensajes
@@ -104,6 +104,12 @@ public class GameService {
 			break;
 		case ServerEvents.CONSULTAR_POSICION_BISMARCK:
 			playerService.handleConsultarPosicionBismarck(senderSession, data);
+			break;
+		case ServerEvents.AVION_SIN_COMBUSTIBLE:
+			playerService.handleAvionSinCombustible(senderSession, data, players, sessions);
+			break;
+		case ServerEvents.SOLICITA_VOLVER_PORTAVIONES:
+			playerService.handleVolverPortaviones(senderSession, data, players);
 			break;
 		default:
 			System.err.println("Acción no reconocida: " + action);

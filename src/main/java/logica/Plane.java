@@ -1,12 +1,14 @@
 package logica;
 
 public class Plane extends GameElement {
-
-	private String estado; // ver de hacerlo enum?}
+	private String estado;
 	private boolean withPilot;
 	private boolean withObserver;
 	private boolean withOperator;
 	private int defaultSpeed;
+
+	private float fuelAmount;
+	private float fuelConsumptionRate;
 
 	public Plane(float posX, float posY, float angle, boolean withPilot, boolean withObserver, boolean withOperator) {
 		super(posX, posY, angle);
@@ -15,6 +17,9 @@ public class Plane extends GameElement {
 		this.withObserver = withObserver;
 		this.withOperator = withOperator;
 		this.defaultSpeed = 3;
+
+		this.fuelAmount = (float) 100;
+		this.fuelConsumptionRate = calculateFuelConsumption();
 	}
 
 	private int getTripulantes() {
@@ -26,6 +31,35 @@ public class Plane extends GameElement {
 		if (this.withOperator)
 			count++;
 		return count;
+	}
+
+	private float calculateFuelConsumption() {
+		float baseFuelConsumption = (float) 1.0;
+		int cantTrip = getTripulantes();
+
+		if (cantTrip <= 1) {
+			return baseFuelConsumption;
+		} else {
+			return baseFuelConsumption * (1 + ((float) 0.15 * (cantTrip - 1)));
+		}
+	}
+
+	// Ver si lo usamos
+	public void updateFuel(float elapsedTime) {
+		this.fuelAmount -= this.fuelConsumptionRate * elapsedTime;
+
+		if (this.fuelAmount < 0) {
+			this.fuelAmount = 0;
+			this.estado = "Sin Combustible";
+		}
+	}
+
+	public float getFuelAmount() {
+		return fuelAmount;
+	}
+
+	public float getFuelConsumptionRate() {
+		return fuelConsumptionRate;
 	}
 
 	public String getEstado() {
@@ -53,6 +87,19 @@ public class Plane extends GameElement {
 
 	@Override
 	public int getVisionRadius() {
-		return this.withObserver ? 500 : 300;
+		return this.withObserver ? 300 : 150;
+	}
+
+	// Getters for crew configuration
+	public boolean isWithPilot() {
+		return withPilot;
+	}
+
+	public boolean isWithObserver() {
+		return withObserver;
+	}
+
+	public boolean isWithOperator() {
+		return withOperator;
 	}
 }

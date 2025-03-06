@@ -26,6 +26,9 @@ public final class ServerEvents {
 	public static final String DISPARO_A_BISMARCK = "disparo_a_bismarck";
 	public static final String CONSULTAR_POSICION_BISMARCK = "consultar_posicion_bismarck";
 	public static final String DATOS_POSICION_BISMARCK = "datos_posicion_bismarck";
+	public static final String AVION_SIN_COMBUSTIBLE = "avion_sin_combustible";
+	public static final String VOLVER_PORTAVIONES = "volver_portaviones";
+	public static final String SOLICITA_VOLVER_PORTAVIONES = "solicita_volver_portaviones";
 
 	private ServerEvents() {
 	}

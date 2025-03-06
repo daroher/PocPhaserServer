@@ -17,7 +17,10 @@ public class ConnectionService {
 	public ConnectionService() {
 	}
 
-	public void handleNewConnection(Session session, Map<String, Player> players) {
+	public void handleNewConnection(Session session, Map<String, Player> players, Set<Session> sessions) {
+		
+		sessions.add(session);
+		
 		JsonObject mensaje = new JsonObject();
 		mensaje.addProperty("action", ServerEvents.JUGADORES_ACTUALES);
 
