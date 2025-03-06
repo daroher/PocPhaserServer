@@ -76,7 +76,7 @@ public class Plane extends GameElement {
 			return this.defaultSpeed;
 		}
 
-		double decrement = this.getTripulantes() * 0.20; // decrement
+		double decrement = this.getTripulantes() * 0.20; // decremento
 
 		if (decrement > 1.0) {
 			decrement = 1.0;

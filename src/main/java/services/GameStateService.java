@@ -113,7 +113,6 @@ public class GameStateService {
 	}
 
 	public void checkVictory(Set<Session> sessions, Map<String, Player> players) {
-		System.out.println("aviones " + cantAviones);
 		if (cantAviones == 0 || vidaBismarck == 0) {
 			String team = (cantAviones == 0) ? "bismarck" : "britanicos";
 			sendVictoryMessage(team, sessions, players);
