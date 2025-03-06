@@ -1,4 +1,4 @@
-package server;
+package logica;
 
 public class GameEventFrance extends GameEvent {
 

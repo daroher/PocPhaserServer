@@ -1,4 +1,4 @@
-package server;
+package logica;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -91,7 +91,5 @@ public class Player {
 	public void setWithOperator(boolean withOperator) {
 		this.withOperator = withOperator;
 	}
-	
-	
 
 }
