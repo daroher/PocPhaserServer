@@ -103,7 +103,7 @@ public class GameStateService {
 						for (Player otherPlayer : players.values()) {
 							NotificationHelper.sendMessage(otherPlayer.getSession(), mensaje.toString());
 						}
-					}					
+					}
 				}
 			}
 		} catch (Exception e) {
@@ -132,5 +132,53 @@ public class GameStateService {
 
 		players.clear();
 		sessions.clear();
+	}
+
+	public void pauseGame(Map<String, Player> players) {
+
+		JsonObject pauseMessage = new JsonObject();
+		pauseMessage.addProperty("action", ServerEvents.PAUSAR_JUEGO);
+
+		for (Player player : players.values()) {
+			if (player.getSession().isOpen()) {
+				NotificationHelper.sendMessage(player.getSession(), pauseMessage.toString());
+			}
+		}
+	}
+
+	public void resumeGame(Map<String, Player> players) {
+
+		JsonObject resumeMessage = new JsonObject();
+		resumeMessage.addProperty("action", ServerEvents.REANUDAR_JUEGO);
+
+		for (Player player : players.values()) {
+			if (player.getSession().isOpen()) {
+				NotificationHelper.sendMessage(player.getSession(), resumeMessage.toString());
+			}
+		}
+	}
+
+	public void saveGame(Map<String, Player> players) {
+
+		JsonObject saveMessage = new JsonObject();
+		saveMessage.addProperty("action", ServerEvents.GUARDAR_JUEGO);
+
+		for (Player player : players.values()) {
+			if (player.getSession().isOpen()) {
+				NotificationHelper.sendMessage(player.getSession(), saveMessage.toString());
+			}
+		}
+	}
+
+	public void loadGame(Map<String, Player> players) {
+
+		JsonObject loadMessage = new JsonObject();
+		loadMessage.addProperty("action", ServerEvents.CARGAR_JUEGO);
+
+		for (Player player : players.values()) {
+			if (player.getSession().isOpen()) {
+				NotificationHelper.sendMessage(player.getSession(), loadMessage.toString());
+			}
+		}
 	}
 }
