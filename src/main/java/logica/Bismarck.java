@@ -5,6 +5,10 @@ public class Bismarck extends ElementoJuego {
 	private int defaultSpeed;
 	private Arma arma;
 
+	public Bismarck() {
+		super();
+	}
+
 	public Bismarck(float posX, float posY, float angle, int vidaRestante) {
 		super(posX, posY, angle);
 		this.vidaRestante = vidaRestante;

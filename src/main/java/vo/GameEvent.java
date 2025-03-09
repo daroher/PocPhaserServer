@@ -1,4 +1,4 @@
-package logica;
+package vo;
 
 public class GameEvent {
 	private String action;

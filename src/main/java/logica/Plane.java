@@ -1,6 +1,6 @@
 package logica;
 
-public class Plane extends GameElement {
+public class Plane extends ElementoJuego {
 	private String estado;
 	private boolean withPilot;
 	private boolean withObserver;
@@ -86,7 +86,7 @@ public class Plane extends GameElement {
 	}
 
 	@Override
-	public int getVisionRadius() {
+	public float getVisionRadius() {
 		return this.withObserver ? 300 : 150;
 	}
 

@@ -8,11 +8,11 @@ import javax.websocket.Session;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
-import logica.GameEvent;
 import logica.Plane;
 import logica.Player;
 import utils.NotificationHelper;
 import utils.ServerEvents;
+import vo.GameEvent;
 
 public class CombatService {
 	private static final Gson gson = new Gson();

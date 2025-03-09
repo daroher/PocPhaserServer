@@ -8,10 +8,10 @@ import javax.websocket.Session;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
-import logica.GameEvent;
 import logica.Player;
 import utils.NotificationHelper;
 import utils.ServerEvents;
+import vo.GameEvent;
 
 public class PlayerService {
 	private static final Gson gson = new Gson();

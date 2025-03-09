@@ -10,7 +10,6 @@ import javax.websocket.Session;
 
 import com.google.gson.Gson;
 
-import logica.GameEvent;
 import logica.Player;
 import services.CombatService;
 import services.ConnectionService;
@@ -18,6 +17,7 @@ import services.GameStateService;
 import services.PlayerService;
 import utils.NotificationHelper;
 import utils.ServerEvents;
+import vo.GameEvent;
 
 public class GameService {
 	private static final Gson gson = new Gson();
@@ -51,7 +51,7 @@ public class GameService {
 		try {
 			GameEvent playerEvent = gson.fromJson(message, GameEvent.class);
 			if (playerEvent == null || playerEvent.getAction() == null) {
-				System.err.println("Error: mensaje inválido.");
+				System.err.println("Error: mensaje inválido." + message);
 				return;
 			}
 			messageReducer(playerEvent.getAction(), senderSession, message);
@@ -117,12 +117,22 @@ public class GameService {
 		case ServerEvents.REANUDAR_JUEGO:
 			gameStateService.resumeGame(players);
 			break;
+		case ServerEvents.SOLICITAR_GUARDAR_JUEGO:
+			gameStateService.requestSaveGame(players);
+			break;
 		case ServerEvents.GUARDAR_JUEGO:
-			gameStateService.saveGame(players);
+			gameStateService.saveGame(players, data);
 			break;
-		case ServerEvents.CARGAR_JUEGO:
-			gameStateService.loadGame(players);
+		case ServerEvents.SOLICITAR_CARGAR_JUEGO:
+			gameStateService.requestLoadGame(players);
 			break;
+		case ServerEvents.SELECCION_JUEGO:
+		    gameStateService.handleGameSelection(senderSession, data, players, sessions);
+		    break;
+		case ServerEvents.CONFIRMAR_JUEGO:
+		    gameStateService.confirmGameSelection(senderSession, data, players, sessions);
+		    break;
+
 		default:
 			System.err.println("Acción no reconocida: " + action);
 			break;
