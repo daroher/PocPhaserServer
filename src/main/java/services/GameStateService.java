@@ -1,10 +1,6 @@
 package services;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +15,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 
+import dao.DAOPartida;
 import logica.AvionBritanico;
 import logica.Bismarck;
 import logica.Francia;
@@ -27,10 +24,13 @@ import logica.Partida;
 import logica.Player;
 import logica.Portavion;
 import logica.Tripulante;
+import utils.Conexion;
 import utils.NotificationHelper;
 import utils.ServerEvents;
 import vo.GameEvent;
 import vo.GameEventFrance;
+import vo.PartidaData;
+import vo.PlayerData;
 
 public class GameStateService {
 	private int cantAviones = 10;
@@ -40,46 +40,7 @@ public class GameStateService {
 
 	private final Gson gson = new Gson();
 	private final Map<String, PartidaData> partialSaves = new ConcurrentHashMap<>();
-
-	// Clase para almacenar datos parciales de la partida
-	private static class PartidaData {
-		PlayerData bismarckData;
-		PlayerData britanicosData;
-	}
-
-	// Clase para mapear datos comunes del JSON
-	private static class PlayerData {
-		float x;
-		float y;
-		float angle;
-		float visionRadius;
-		String team;
-		BismarckData bismarck; // Solo para equipo Bismarck
-		PortavionData portavion; // Solo para equipo Britanicos
-		AvionActivoData avionActivo; // Solo para equipo Britanicos
-	}
-
-	// Clases para datos específicos de cada equipo
-	private static class BismarckData {
-		float franceX;
-		float franceY;
-	}
-
-	private static class PortavionData {
-		float posX;
-		float posY;
-		float angle;
-		int avionesDisponibles;
-	}
-
-	private static class AvionActivoData {
-		String estado;
-		List<String> tripulantes;
-		boolean withPilot;
-		boolean withObserver;
-		boolean withOperator;
-		float fuelAmount;
-	}
+	private DAOPartida daoPartida = new DAOPartida(); 
 
 	private Partida crearPartidaCompleta(PartidaData data) {
 		Partida partida = new Partida();
@@ -89,28 +50,30 @@ public class GameStateService {
 		// Crear jugador Bismarck
 		Jugador jugadorBismarck = new Jugador();
 		Bismarck bismarck = new Bismarck();
-		bismarck.setPosX(data.bismarckData.x);
-		bismarck.setPosY(data.bismarckData.y);
-		bismarck.setAngle(data.bismarckData.angle);
+		bismarck.setPosX(data.getBismarckData().getX());
+		bismarck.setPosY(data.getBismarckData().getY());
+		bismarck.setAngle(data.getBismarckData().getAngle());
 		jugadorBismarck.setElementoJuego(bismarck);
 		jugadorBismarck.setEquipo("BISMARCK");
 
 		// Crear evento Francia
 		Francia francia = new Francia();
-		francia.setPosX(data.bismarckData.bismarck.franceX);
-		francia.setPosY(data.bismarckData.bismarck.franceY);
+		francia.setPosX(data.getBismarckData().getBismarck().getFranceX());
+		francia.setPosY(data.getBismarckData().getBismarck().getFranceY());
 
 		// Crear jugador Británicos
 		Jugador jugadorBritanicos = new Jugador();
-		if (data.britanicosData.avionActivo != null && "Funcional".equals(data.britanicosData.avionActivo.estado)) {
-			AvionBritanico avion = new AvionBritanico(data.britanicosData.x, data.britanicosData.y,
-					data.britanicosData.angle, data.britanicosData.avionActivo.estado);
-			avion.setTripulantes(convertirTripulantes(data.britanicosData.avionActivo.tripulantes));
+		if (data.getBritanicosData().getAvionActivo() != null
+				&& "Funcional".equals(data.getBritanicosData().getAvionActivo().getEstado())) {
+			AvionBritanico avion = new AvionBritanico(data.getBritanicosData().getX(), data.getBritanicosData().getY(),
+					data.getBritanicosData().getAngle(), data.getBritanicosData().getAvionActivo().getEstado());
+			avion.setTripulantes(convertirTripulantes(data.getBritanicosData().getAvionActivo().getTripulantes()));
 			jugadorBritanicos.setElementoJuego(avion);
 		} else {
-			Portavion portavion = new Portavion(data.britanicosData.portavion.posX, data.britanicosData.portavion.posY,
-					data.britanicosData.portavion.angle);
-			portavion.setCantAviones(data.britanicosData.portavion.avionesDisponibles);
+			Portavion portavion = new Portavion(data.getBritanicosData().getPortavion().getPosX(),
+					data.getBritanicosData().getPortavion().getPosY(),
+					data.getBritanicosData().getPortavion().getAngle());
+			portavion.setCantAviones(data.getBritanicosData().getPortavion().getAvionesDisponibles());
 			jugadorBritanicos.setElementoJuego(portavion);
 		}
 		jugadorBritanicos.setEquipo("BRITANICOS");
@@ -118,7 +81,7 @@ public class GameStateService {
 		List<Jugador> jugadores = new ArrayList<>();
 		jugadores.add(jugadorBismarck);
 		jugadores.add(jugadorBritanicos);
-		 
+
 		// Agregar componentes a la partida
 		partida.setJugadores(jugadores);
 		partida.setFrancia(francia);
@@ -127,45 +90,13 @@ public class GameStateService {
 	}
 
 	private List<Tripulante> convertirTripulantes(List<String> tripulantesStr) {
-	    return tripulantesStr.stream()
-	            .map(Tripulante::fromTipo) // Usa el nuevo método
-	            .collect(Collectors.toList());
+		return tripulantesStr.stream().map(Tripulante::fromTipo) // Usa el nuevo método
+				.collect(Collectors.toList());
 	}
 
-	private void guardarPartidaEnBD(Connection con, Partida partida) {
-	    String insertPartida = "INSERT INTO BistmarckDB.Partidas (id, estado, jugadores, francia_x, francia_y, francia_angle) VALUES (?, ?, ?, ?, ?, ?)";
-	    PreparedStatement pstmt = null;
-
-	    try {
-	        pstmt = con.prepareStatement(insertPartida);
-	        pstmt.setString(1, partida.getId());
-	        pstmt.setString(2, partida.getEstado());
-
-	        String jugadoresJson = new Gson().toJson(partida.getJugadores());
-	        pstmt.setString(3, jugadoresJson);
-
-	        Francia francia = partida.getFrancia();
-	        pstmt.setFloat(4, francia.getPosX());
-	        pstmt.setFloat(5, francia.getPosY());
-	        pstmt.setFloat(6, francia.getAngle());
-
-	        pstmt.executeUpdate();
-	        System.out.println("Partida guardada en la base de datos con éxito.");
-	    } catch (SQLException e) {
-	        System.out.println("ERROR: No se pudo guardar la partida.");
-	        e.printStackTrace();
-	    } finally {
-	        try {
-	            if (pstmt != null) pstmt.close();
-	        } catch (SQLException e) {
-	            e.printStackTrace();
-	        }
-	    }
-	}
 
 	private String obtenerIdPartidaActual() {
-		// Implementar lógica para obtener ID de partida actual
-		return "partida-unica"; // Ejemplo simplificado
+		return "partida-unica";
 	}
 
 	private GameStateService() {
@@ -319,91 +250,44 @@ public class GameStateService {
 	}
 
 	public void saveGame(Map<String, Player> players, String data) {
-	    try {
-	        PlayerData playerData = gson.fromJson(data, PlayerData.class);
-	        String partidaId = obtenerIdPartidaActual();
+		try {
+			PlayerData playerData = gson.fromJson(data, PlayerData.class);
+			String partidaId = obtenerIdPartidaActual();
 
-	        // Bloque sincronizado para operaciones compuestas
-	        synchronized (partialSaves) {
-	            PartidaData partidaData = partialSaves.computeIfAbsent(partidaId, k -> new PartidaData());
+			// Bloque sincronizado para operaciones compuestas
+			synchronized (partialSaves) {
+				PartidaData partidaData = partialSaves.computeIfAbsent(partidaId, k -> new PartidaData());
 
-	            if ("bismarck".equalsIgnoreCase(playerData.team)) {
-	                partidaData.bismarckData = playerData;
-	            } else if ("britanicos".equalsIgnoreCase(playerData.team)) {
-	                partidaData.britanicosData = playerData;
-	            }
+				if ("bismarck".equalsIgnoreCase(playerData.getTeam())) {
+					partidaData.setBismarckData(playerData);
+				} else if ("britanicos".equalsIgnoreCase(playerData.getTeam())) {
+					partidaData.setBritanicosData(playerData);
+				}
 
-	            if (partidaData.bismarckData != null && partidaData.britanicosData != null) {
-	                Partida partidaCompleta = crearPartidaCompleta(partidaData);
-	                
-	            	String driver = "com.mysql.jdbc.Driver";
-	            	Class.forName(driver);
-	    			String url = "jdbc:mysql://localhost:3306/BistmarckDB";
-	    			Connection con = DriverManager.getConnection(url, "root", "root");
-	    			
-	    			
-	                guardarPartidaEnBD(con, partidaCompleta);
-	                partialSaves.remove(partidaId); // Eliminar dentro del bloque sincronizado
-	            }
-	        }
+				if (partidaData.getBismarckData() != null && partidaData.getBritanicosData() != null) {
+					Partida partidaCompleta = crearPartidaCompleta(partidaData);
 
-	    } catch (JsonSyntaxException e) {
-	        System.err.println("Error procesando JSON: " + e.getMessage());
-	    } catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+					Connection con = new Conexion().obtenerConexion();
+					daoPartida.guardarPartidaEnBD(con, partidaCompleta);
+					
+					partialSaves.remove(partidaId); // Eliminar dentro del bloque sincronizado
+				}
+			}
+
+		} catch (JsonSyntaxException e) {
+			System.err.println("Error procesando JSON: " + e.getMessage());
 		}
+
 	}
 
 	public void requestLoadGame(Map<String, Player> players) {
 
 		JsonObject loadMessage = new JsonObject();
 		loadMessage.addProperty("action", ServerEvents.CARGAR_JUEGO);
-		
-	        try { 
-	        	
-	        	String driver = "com.mysql.jdbc.Driver";
-            	Class.forName(driver);
-    			String url = "jdbc:mysql://localhost:3306/BistmarckDB";
-    			Connection con = DriverManager.getConnection(url, "root", "root");
-	        	
-	            // En este ejemplo, obtenemos la última partida guardada
-	            String sql = "SELECT id, estado, jugadores, francia_x, francia_y, francia_angle FROM BistmarckDB.Partidas ORDER BY id DESC LIMIT 1";
-	            try (PreparedStatement ps = con.prepareStatement(sql);
-	                 ResultSet rs = ps.executeQuery()) {
 
-	                if (rs.next()) {
-	                    // Construimos el objeto JSON con los datos obtenidos
-	                    loadMessage.addProperty("id", rs.getString("id"));
-	                    loadMessage.addProperty("estado", rs.getString("estado"));
-	                    loadMessage.addProperty("jugadores", rs.getString("jugadores"));
-	                    
-	                    JsonObject francia = new JsonObject();
-	                    francia.addProperty("x", rs.getFloat("francia_x"));
-	                    francia.addProperty("y", rs.getFloat("francia_y"));
-	                    francia.addProperty("angle", rs.getFloat("francia_angle"));
-	                    
-	                    loadMessage.add("francia", francia);
-	                    
-	                    // Creamos el mensaje final con el evento a enviar
-	                    JsonObject message = new JsonObject();
-	                    message.addProperty("event", "CARGAR_JUEGO");
-	                    message.add("data", loadMessage);
-	                    
-	                } else {
-	                    System.out.println("No se encontró partida guardada.");
-	                }
-	            }
-	        } catch (SQLException e) {
-	            e.printStackTrace();
-	        } catch (ClassNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-	    
+		
+		Connection con = new Conexion().obtenerConexion();
+		daoPartida.obtenerPartida(con, loadMessage);
 
 		for (Player player : players.values()) {
 			if (player.getSession().isOpen()) {
