@@ -13,6 +13,7 @@ public class GameEvent {
 	private boolean withOperator;
 	private float vsRelativeDistanceX;
 	private float vsDistanceZ;
+	private boolean isPlaneActive;
 
 	public boolean isWithPilot() {
 		return withPilot;
@@ -119,6 +120,14 @@ public class GameEvent {
 
 	public void setVsDistanceZ(float vsDistanceZ) {
 		this.vsDistanceZ = vsDistanceZ;
+	}
+	
+	public boolean isPlaneActive() {
+		return this.isPlaneActive;
+	}
+
+	public void setIsPlaneActive(boolean isPlaneActive) {
+		this.isPlaneActive = isPlaneActive;
 	}
 
 }
