@@ -7,6 +7,11 @@ public class Partida {
 	private String id;
 	private String estado;
 	private List<Jugador> jugadores;
+	private Francia francia;
+
+	public Partida() {
+		super();
+	}
 
 	public Partida(String id) {
 		this.id = id;
@@ -65,5 +70,18 @@ public class Partida {
 
 	public void setJugadores(List<Jugador> jugadores) {
 		this.jugadores = jugadores;
+	}
+
+	public Francia getFrancia() {
+		return francia;
+	}
+
+	public void setFrancia(Francia francia) {
+		this.francia = francia;
+	}
+
+	@Override
+	public String toString() {
+		return "Partida [id=" + id + ", estado=" + estado + ", jugadores=" + jugadores + ", francia=" + francia + "]";
 	}
 }

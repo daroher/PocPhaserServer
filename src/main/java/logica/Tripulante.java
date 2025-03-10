@@ -1,7 +1,7 @@
 package logica;
 
 public enum Tripulante {
-	PILOTO("pilot"), OBSERVADOR("observer"), OPERADOR("operator");
+	PILOT("pilot"), OBSERVER("observer"), OPERATOR("operator");
 
 	private final String tipo;
 
@@ -11,5 +11,15 @@ public enum Tripulante {
 
 	public String getTipo() {
 		return tipo;
+	}
+
+	// Método para convertir String a Tripulante
+	public static Tripulante fromTipo(String tipo) {
+		for (Tripulante tripulante : Tripulante.values()) {
+			if (tripulante.tipo.equalsIgnoreCase(tipo)) {
+				return tripulante;
+			}
+		}
+		throw new IllegalArgumentException("Tripulante no válido: " + tipo);
 	}
 }

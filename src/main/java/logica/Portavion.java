@@ -48,4 +48,9 @@ public class Portavion extends ElementoJuego {
 	public float getVisionRadius() {
 		return 0;
 	}
+
+	@Override
+	public float getSpeed() {
+		return 0;
+	}
 }

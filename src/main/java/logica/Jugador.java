@@ -5,6 +5,10 @@ public class Jugador {
 	private int idJugador;
 	private ElementoJuego elementoJuego;
 
+	public Jugador() {
+		super();
+	}
+
 	public Jugador(String equipo, int idJugador) {
 		this.equipo = equipo;
 		this.idJugador = idJugador;
@@ -14,6 +18,10 @@ public class Jugador {
 		this.equipo = equipo;
 		this.idJugador = idJugador;
 		this.elementoJuego = elementoJuego;
+	}
+
+	public void setEquipo(String equipo) {
+		this.equipo = equipo;
 	}
 
 	public String getEquipo() {
@@ -26,6 +34,10 @@ public class Jugador {
 
 	public ElementoJuego getElementoJuego() {
 		return elementoJuego;
+	}
+
+	public void setElementoJuego(ElementoJuego elementoJuego) {
+		this.elementoJuego = elementoJuego;
 	}
 
 }

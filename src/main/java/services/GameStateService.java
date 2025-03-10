@@ -1,24 +1,103 @@
 package services;
 
+import java.sql.Connection;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import javax.websocket.Session;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
 
-import logica.GameEvent;
-import logica.GameEventFrance;
+import dao.DAOPartida;
+import logica.AvionBritanico;
+import logica.Bismarck;
+import logica.Francia;
+import logica.Jugador;
+import logica.Partida;
 import logica.Player;
+import logica.Portavion;
+import logica.Tripulante;
+import utils.Conexion;
 import utils.NotificationHelper;
 import utils.ServerEvents;
+import vo.GameEvent;
+import vo.GameEventFrance;
+import vo.PartidaData;
+import vo.PlayerData;
 
 public class GameStateService {
 	private int cantAviones = 10;
 	private int vidaBismarck = 3;
 
 	private static GameStateService instance;
+
+	private final Gson gson = new Gson();
+	private final Map<String, PartidaData> partialSaves = new ConcurrentHashMap<>();
+	private DAOPartida daoPartida = new DAOPartida(); 
+
+	private Partida crearPartidaCompleta(PartidaData data) {
+		Partida partida = new Partida();
+		partida.setId(UUID.randomUUID().toString());
+		partida.setEstado("GUARDADA");
+
+		// Crear jugador Bismarck
+		Jugador jugadorBismarck = new Jugador();
+		Bismarck bismarck = new Bismarck();
+		bismarck.setPosX(data.getBismarckData().getX());
+		bismarck.setPosY(data.getBismarckData().getY());
+		bismarck.setAngle(data.getBismarckData().getAngle());
+		jugadorBismarck.setElementoJuego(bismarck);
+		jugadorBismarck.setEquipo("BISMARCK");
+
+		// Crear evento Francia
+		Francia francia = new Francia();
+		francia.setPosX(data.getBismarckData().getBismarck().getFranceX());
+		francia.setPosY(data.getBismarckData().getBismarck().getFranceY());
+
+		// Crear jugador Británicos
+		Jugador jugadorBritanicos = new Jugador();
+		if (data.getBritanicosData().getAvionActivo() != null
+				&& "Funcional".equals(data.getBritanicosData().getAvionActivo().getEstado())) {
+			AvionBritanico avion = new AvionBritanico(data.getBritanicosData().getX(), data.getBritanicosData().getY(),
+					data.getBritanicosData().getAngle(), data.getBritanicosData().getAvionActivo().getEstado());
+			avion.setTripulantes(convertirTripulantes(data.getBritanicosData().getAvionActivo().getTripulantes()));
+			jugadorBritanicos.setElementoJuego(avion);
+		} else {
+			Portavion portavion = new Portavion(data.getBritanicosData().getPortavion().getPosX(),
+					data.getBritanicosData().getPortavion().getPosY(),
+					data.getBritanicosData().getPortavion().getAngle());
+			portavion.setCantAviones(data.getBritanicosData().getPortavion().getAvionesDisponibles());
+			jugadorBritanicos.setElementoJuego(portavion);
+		}
+		jugadorBritanicos.setEquipo("BRITANICOS");
+
+		List<Jugador> jugadores = new ArrayList<>();
+		jugadores.add(jugadorBismarck);
+		jugadores.add(jugadorBritanicos);
+
+		// Agregar componentes a la partida
+		partida.setJugadores(jugadores);
+		partida.setFrancia(francia);
+
+		return partida;
+	}
+
+	private List<Tripulante> convertirTripulantes(List<String> tripulantesStr) {
+		return tripulantesStr.stream().map(Tripulante::fromTipo) // Usa el nuevo método
+				.collect(Collectors.toList());
+	}
+
+
+	private String obtenerIdPartidaActual() {
+		return "partida-unica";
+	}
 
 	private GameStateService() {
 	}
@@ -158,10 +237,10 @@ public class GameStateService {
 		}
 	}
 
-	public void saveGame(Map<String, Player> players) {
+	public void requestSaveGame(Map<String, Player> players) {
 
 		JsonObject saveMessage = new JsonObject();
-		saveMessage.addProperty("action", ServerEvents.GUARDAR_JUEGO);
+		saveMessage.addProperty("action", ServerEvents.SOLICITAR_GUARDAR_JUEGO);
 
 		for (Player player : players.values()) {
 			if (player.getSession().isOpen()) {
@@ -170,15 +249,84 @@ public class GameStateService {
 		}
 	}
 
-	public void loadGame(Map<String, Player> players) {
+	public void saveGame(Map<String, Player> players, String data) {
+		try {
+			PlayerData playerData = gson.fromJson(data, PlayerData.class);
+			String partidaId = obtenerIdPartidaActual();
+
+			// Bloque sincronizado para operaciones compuestas
+			synchronized (partialSaves) {
+				PartidaData partidaData = partialSaves.computeIfAbsent(partidaId, k -> new PartidaData());
+
+				if ("bismarck".equalsIgnoreCase(playerData.getTeam())) {
+					partidaData.setBismarckData(playerData);
+				} else if ("britanicos".equalsIgnoreCase(playerData.getTeam())) {
+					partidaData.setBritanicosData(playerData);
+				}
+
+				if (partidaData.getBismarckData() != null && partidaData.getBritanicosData() != null) {
+					Partida partidaCompleta = crearPartidaCompleta(partidaData);
+
+					Connection con = new Conexion().obtenerConexion();
+					daoPartida.guardarPartidaEnBD(con, partidaCompleta);
+					
+					partialSaves.remove(partidaId); // Eliminar dentro del bloque sincronizado
+				}
+			}
+
+		} catch (JsonSyntaxException e) {
+			System.err.println("Error procesando JSON: " + e.getMessage());
+		}
+
+	}
+
+	public void requestLoadGame(Map<String, Player> players) {
 
 		JsonObject loadMessage = new JsonObject();
 		loadMessage.addProperty("action", ServerEvents.CARGAR_JUEGO);
 
+		
+		Connection con = new Conexion().obtenerConexion();
+		daoPartida.obtenerPartida(con, loadMessage);
+
 		for (Player player : players.values()) {
 			if (player.getSession().isOpen()) {
+				System.out.println("mensaje:" + loadMessage.toString());
 				NotificationHelper.sendMessage(player.getSession(), loadMessage.toString());
 			}
 		}
 	}
+
+	public void handleGameSelection(Session senderSession, String data, Map<String, Player> players,
+			Set<Session> sessions) {
+		JsonObject playerSelection = new Gson().fromJson(data, JsonObject.class);
+		String selectedOption = playerSelection.get("option").getAsString();
+
+		JsonObject selectionMessage = new JsonObject();
+		selectionMessage.addProperty("action", ServerEvents.SELECCION_JUEGO);
+		selectionMessage.addProperty("option", selectedOption);
+
+		for (Session session : sessions) {
+			if (session.isOpen() && !session.equals(senderSession)) {
+				NotificationHelper.sendMessage(session, selectionMessage.toString());
+			}
+		}
+	}
+
+	public void confirmGameSelection(Session senderSession, String data, Map<String, Player> players,
+			Set<Session> sessions) {
+		JsonObject confirmSelection = new Gson().fromJson(data, JsonObject.class);
+		String finalOption = confirmSelection.get("option").getAsString();
+
+		JsonObject startGameMessage = new JsonObject();
+		startGameMessage.addProperty("action", ServerEvents.CONFIRMAR_JUEGO);
+		startGameMessage.addProperty("option", finalOption);
+
+		for (Session session : sessions) {
+			if (session.isOpen()) {
+				NotificationHelper.sendMessage(session, startGameMessage.toString());
+			}
+		}
+	}
+
 }

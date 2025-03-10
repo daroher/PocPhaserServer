@@ -32,9 +32,13 @@ public final class ServerEvents {
 	public static final String PAUSAR_JUEGO = "pausar_juego";
 	public static final String REANUDAR_JUEGO = "reanudar_juego";
 	public static final String GUARDAR_JUEGO = "guardar_juego";
+	public static final String SOLICITAR_GUARDAR_JUEGO = "solicitar_guardar_juego";
 	public static final String CARGAR_JUEGO = "cargar_juego";
-	
+	public static final String SOLICITAR_CARGAR_JUEGO = "solicitar_cargar_juego";
+	public static final String SELECCION_JUEGO = "seleccion_juego";
+	public static final String CONFIRMAR_JUEGO = "confirmar_juego";
 
+	
 	private ServerEvents() {
 	}
 }
