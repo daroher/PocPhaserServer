@@ -54,6 +54,7 @@ public class PlayerService {
 			player.setY(playerEvent.getY());
 			player.setVisionRadius(playerEvent.getVisionRadius());
 			player.setAngle(playerEvent.getAngle());
+			player.setIsPlaneActive(playerEvent.isPlaneActive());
 			checkMapVision(player, players);
 		}
 		for (Player otherPlayer : players.values()) {
@@ -72,7 +73,7 @@ public class PlayerService {
 					Math.pow(player.getX() - otherPlayer.getX(), 2) + Math.pow(player.getY() - otherPlayer.getY(), 2));
 
 			// Si está dentro del rango de visión
-			if (distance != 0 && distance <= player.getVisionRadius()) {
+			if (distance != 0 && distance <= player.getVisionRadius() && player.isPlaneActive()) {
 				if (!player.isInVisionRangeOf(otherPlayer)) {
 					player.setInVisionRangeOf(otherPlayer, true);
 					notifyPlayerInRange(player, otherPlayer);
@@ -85,7 +86,7 @@ public class PlayerService {
 			}
 
 			// Verificar la visión inversa
-			if (distance != 0 && distance <= otherPlayer.getVisionRadius()) {
+			if (distance != 0 && distance <= otherPlayer.getVisionRadius() && player.isPlaneActive()) {
 				if (!otherPlayer.isInVisionRangeOf(player)) {
 					otherPlayer.setInVisionRangeOf(player, true);
 					notifyPlayerInRange(otherPlayer, player);

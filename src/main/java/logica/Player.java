@@ -15,6 +15,7 @@ public class Player {
 	private Map<Player, Boolean> inVisionRangeOfPlayers = new HashMap<Player, Boolean>();
 	private boolean withObserver;
 	private boolean withOperator;
+	private boolean isPlaneActive;
 
 	public Player(String id, String team, float x, float y, float visionRadius, Session session, float angle) {
 		this.team = team;
@@ -90,6 +91,14 @@ public class Player {
 
 	public void setWithOperator(boolean withOperator) {
 		this.withOperator = withOperator;
+	}
+	
+	public boolean isPlaneActive() {
+		return this.isPlaneActive;
+	}
+
+	public void setIsPlaneActive(boolean isPlaneActive) {
+		this.isPlaneActive = isPlaneActive;
 	}
 
 }
