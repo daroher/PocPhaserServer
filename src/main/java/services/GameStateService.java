@@ -297,20 +297,19 @@ public class GameStateService {
 		}
 	}
 
-	public void handleGameSelection(Session senderSession, String data, Map<String, Player> players,
-			Set<Session> sessions) {
-		JsonObject playerSelection = new Gson().fromJson(data, JsonObject.class);
-		String selectedOption = playerSelection.get("option").getAsString();
+	public void handleGameSelection(Session senderSession, String data, Map<String, Player> players, Set<Session> sessions) {
+	    JsonObject playerSelection = new Gson().fromJson(data, JsonObject.class);
+	    String selectedOption = playerSelection.get("option").getAsString();
 
-		JsonObject selectionMessage = new JsonObject();
-		selectionMessage.addProperty("action", ServerEvents.SELECCION_JUEGO);
-		selectionMessage.addProperty("option", selectedOption);
+	    JsonObject selectionMessage = new JsonObject();
+	    selectionMessage.addProperty("action", ServerEvents.SELECCION_JUEGO);
+	    selectionMessage.addProperty("option", selectedOption);
 
-		for (Session session : sessions) {
-			if (session.isOpen() && !session.equals(senderSession)) {
-				NotificationHelper.sendMessage(session, selectionMessage.toString());
-			}
-		}
+	    for (Session session : sessions) {
+	        if (session.isOpen() && !session.equals(senderSession)) {
+	            NotificationHelper.sendMessage(session, selectionMessage.toString());
+	        }
+	    }
 	}
 
 	public void confirmGameSelection(Session senderSession, String data, Map<String, Player> players,
