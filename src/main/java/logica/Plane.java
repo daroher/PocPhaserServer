@@ -16,7 +16,7 @@ public class Plane extends GameElement {
 		this.withPilot = withPilot;
 		this.withObserver = withObserver;
 		this.withOperator = withOperator;
-		this.defaultSpeed = 3;
+		this.defaultSpeed = 5;
 
 		this.fuelAmount = (float) 100;
 		this.fuelConsumptionRate = calculateFuelConsumption();
