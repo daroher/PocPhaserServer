@@ -9,6 +9,7 @@ import java.util.Set;
 import javax.websocket.Session;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 
 import logica.Player;
 import services.CombatService;
@@ -131,6 +132,16 @@ public class GameService {
 		    break;
 		case ServerEvents.CONFIRMAR_JUEGO:
 		    gameStateService.confirmGameSelection(senderSession, data, players, sessions);
+		    break;
+		case ServerEvents.SALIR_JUEGO:
+		    // Se reenvía a todas las sesiones
+		    JsonObject exitMessage = new JsonObject();
+		    exitMessage.addProperty("action", ServerEvents.SALIR_JUEGO);
+		    for (Session session : sessions) {
+		        if (session.isOpen()) {
+		            NotificationHelper.sendMessage(session, exitMessage.toString());
+		        }
+		    }
 		    break;
 
 		default:

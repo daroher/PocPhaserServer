@@ -18,6 +18,10 @@ public class Player {
 	private boolean isPlaneActive;
 	private boolean bismarckUsedAdvantage;
 
+	public Player() {
+		super();
+	}
+
 	public Player(String id, String team, float x, float y, float visionRadius, Session session, float angle) {
 		this.team = team;
 		this.x = x;
@@ -92,7 +96,7 @@ public class Player {
 	public void setWithOperator(boolean withOperator) {
 		this.withOperator = withOperator;
 	}
-	
+
 	public boolean isPlaneActive() {
 		return this.isPlaneActive;
 	}

@@ -14,51 +14,68 @@ import utils.ServerEvents;
 
 public class ConnectionService {
 
-	public ConnectionService() {
-	}
+    public ConnectionService() {
+    }
 
-	public void handleNewConnection(Session session, Map<String, Player> players, Set<Session> sessions) {
-		
-		sessions.add(session);
-		
-		JsonObject mensaje = new JsonObject();
-		mensaje.addProperty("action", ServerEvents.JUGADORES_ACTUALES);
+    public void handleNewConnection(Session session, Map<String, Player> players, Set<Session> sessions) {
+        sessions.add(session);
+        String playerId = session.getId();
+        
+        // Verificar si el jugador ya existe en el mapa (evitar duplicados)
+        if (!players.containsKey(playerId)) {
+            players.put(playerId, new Player()); // Puedes asignar un equipo después
+        }
 
-		JsonArray jugadores = new JsonArray();
-		for (Player player : players.values()) {
-			JsonObject jugador = new JsonObject();
-			jugador.addProperty("team", player.getTeam());
-			jugadores.add(jugador);
-		}
-		mensaje.add("jugadores", jugadores);
+        // Crear mensaje de jugadores actuales
+        JsonObject mensaje = new JsonObject();
+        mensaje.addProperty("action", ServerEvents.JUGADORES_ACTUALES);
+        
+        JsonArray jugadores = new JsonArray();
+        for (Player player : players.values()) {
+            JsonObject jugador = new JsonObject();
+            jugador.addProperty("team", player.getTeam());
+            jugadores.add(jugador);
+        }
+        mensaje.add("jugadores", jugadores);
 
-		NotificationHelper.sendMessage(session, mensaje.toString());
-	}
+        // Enviar el mensaje a TODOS los jugadores conectados
+        for (Session activeSession : sessions) {
+            if (activeSession.isOpen()) {
+                NotificationHelper.sendMessage(activeSession, mensaje.toString());
+            }
+        }
 
-	public void handleDisconnection(Session session, Set<Session> sessions, Map<String, Player> players) {
-		String playerId = session.getId();
-		Player player = players.get(playerId);
+        System.out.println("[Servidor] Jugadores conectados: " + players.size());
+    }
 
-		if (player != null) {
-			String teamName = player.getTeam();
-			players.remove(playerId);
+    public void handleDisconnection(Session session, Set<Session> sessions, Map<String, Player> players) {
+        // Remover la sesión desconectada
+        sessions.remove(session);
 
-			JsonObject mensaje = new JsonObject();
-			mensaje.addProperty("action", ServerEvents.JUGADOR_DESCONECTADO);
-			mensaje.addProperty("team", teamName);
+        String playerId = session.getId();
+        Player player = players.get(playerId);
+        if (player != null) {
+            players.remove(playerId);
+        }
 
-			// Notificar a los demás jugadores
-			for (Player otherPlayer : players.values()) {
-				if (!otherPlayer.getSession().getId().equals(playerId)) {
-					NotificationHelper.sendMessage(otherPlayer.getSession(), mensaje.toString());
-				}
-			}
-			// Notificar a todas las sesiones activas
-			for (Session activeSession : sessions) {
-				if (!activeSession.getId().equals(playerId)) {
-					NotificationHelper.sendMessage(activeSession, mensaje.toString());
-				}
-			}
-		}
-	}
+        JsonObject mensaje = new JsonObject();
+        mensaje.addProperty("action", ServerEvents.JUGADORES_ACTUALES);
+        
+        JsonArray jugadoresJson = new JsonArray();
+        for (Player p : players.values()) {
+            JsonObject jugador = new JsonObject();
+            jugador.addProperty("team", p.getTeam());
+            jugadoresJson.add(jugador);
+        }
+        mensaje.add("jugadores", jugadoresJson);
+
+        // Notificar a todas las sesiones activas
+        for (Session activeSession : sessions) {
+            if (activeSession.isOpen()) {
+                NotificationHelper.sendMessage(activeSession, mensaje.toString());
+            }
+        }
+
+        System.out.println("[Servidor] Un jugador se desconectó. Jugadores restantes: " + players.size());
+    }
 }

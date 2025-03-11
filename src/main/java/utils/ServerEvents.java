@@ -37,8 +37,8 @@ public final class ServerEvents {
 	public static final String SOLICITAR_CARGAR_JUEGO = "solicitar_cargar_juego";
 	public static final String SELECCION_JUEGO = "seleccion_juego";
 	public static final String CONFIRMAR_JUEGO = "confirmar_juego";
+	public static final String SALIR_JUEGO = "salir_juego";
 
-	
 	private ServerEvents() {
 	}
 }
