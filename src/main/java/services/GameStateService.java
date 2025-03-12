@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 import javax.websocket.Session;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 
@@ -32,6 +33,7 @@ import vo.GameEvent;
 import vo.GameEventFrance;
 import vo.PartidaData;
 import vo.PlayerData;
+import vo.PortavionData;
 
 public class GameStateService {
 	private int cantAviones = 10;
@@ -41,7 +43,7 @@ public class GameStateService {
 
 	private final Gson gson = new Gson();
 	private final Map<String, PartidaData> partialSaves = new ConcurrentHashMap<>();
-	private IDAOPartida daoPartida = new DAOPartida(); 
+	private IDAOPartida daoPartida = new DAOPartida();
 
 	private Partida crearPartidaCompleta(PartidaData data) {
 		Partida partida = new Partida();
@@ -94,7 +96,6 @@ public class GameStateService {
 		return tripulantesStr.stream().map(Tripulante::fromTipo) // Usa el nuevo método
 				.collect(Collectors.toList());
 	}
-
 
 	private String obtenerIdPartidaActual() {
 		return "partida-unica";
@@ -255,14 +256,36 @@ public class GameStateService {
 			PlayerData playerData = gson.fromJson(data, PlayerData.class);
 			String partidaId = obtenerIdPartidaActual();
 
-			// Bloque sincronizado para operaciones compuestas
 			synchronized (partialSaves) {
 				PartidaData partidaData = partialSaves.computeIfAbsent(partidaId, k -> new PartidaData());
 
 				if ("bismarck".equalsIgnoreCase(playerData.getTeam())) {
 					partidaData.setBismarckData(playerData);
 				} else if ("britanicos".equalsIgnoreCase(playerData.getTeam())) {
-					partidaData.setBritanicosData(playerData);
+					if (partidaData.getBritanicosData() == null) {
+						partidaData.setBritanicosData(new PlayerData());
+					}
+
+					// Si el avión está activo, guardar su información y sus coordenadas
+					if (playerData.getAvionActivo() != null) {
+						partidaData.getBritanicosData().setAvionActivo(playerData.getAvionActivo());
+						partidaData.getBritanicosData().setX(playerData.getX());
+						partidaData.getBritanicosData().setY(playerData.getY());
+						partidaData.getBritanicosData().setAngle(playerData.getAngle());
+					}
+
+					// Guardar siempre la información del portaviones (sus coordenadas y demás)
+					if (playerData.getPortavion() != null) {
+						PortavionData portavionData = playerData.getPortavion();
+						if (partidaData.getBritanicosData().getPortavion() == null) {
+							partidaData.getBritanicosData().setPortavion(new PortavionData());
+						}
+						partidaData.getBritanicosData().getPortavion().setPosX(portavionData.getPosX());
+						partidaData.getBritanicosData().getPortavion().setPosY(portavionData.getPosY());
+						partidaData.getBritanicosData().getPortavion().setAngle(portavionData.getAngle());
+						partidaData.getBritanicosData().getPortavion()
+								.setAvionesDisponibles(portavionData.getAvionesDisponibles());
+					}
 				}
 
 				if (partidaData.getBismarckData() != null && partidaData.getBritanicosData() != null) {
@@ -270,47 +293,72 @@ public class GameStateService {
 
 					Connection con = new Conexion().obtenerConexion();
 					daoPartida.guardarPartidaEnBD(con, partidaCompleta);
-					
-					partialSaves.remove(partidaId); // Eliminar dentro del bloque sincronizado
+
+					partialSaves.remove(partidaId);
+				}
+			}
+
+			// Enviar confirmación al cliente
+			JsonObject successMessage = new JsonObject();
+			successMessage.addProperty("action", ServerEvents.GUARDAR_JUEGO);
+			successMessage.addProperty("status", "success");
+			successMessage.addProperty("message", "Partida guardada correctamente");
+
+			for (Player player : players.values()) {
+				if (player.getSession().isOpen()) {
+					NotificationHelper.sendMessage(player.getSession(), successMessage.toString());
 				}
 			}
 
 		} catch (JsonSyntaxException e) {
 			System.err.println("Error procesando JSON: " + e.getMessage());
+		} catch (Exception e) {
+			System.err.println("Error al guardar la partida: " + e.getMessage());
 		}
-
 	}
 
 	public void requestLoadGame(Map<String, Player> players) {
-
 		JsonObject loadMessage = new JsonObject();
 		loadMessage.addProperty("action", ServerEvents.CARGAR_JUEGO);
 
-		
 		Connection con = new Conexion().obtenerConexion();
-		daoPartida.obtenerPartida(con, loadMessage);
+		JsonObject partidaJson = new JsonObject();
+		daoPartida.obtenerPartida(con, partidaJson);
 
+		// ✅ Convertir correctamente "jugadores" de String JSON a JsonArray
+		JsonArray jugadoresJson;
+		try {
+			String jugadoresString = partidaJson.get("jugadores").getAsString();
+			jugadoresJson = new Gson().fromJson(jugadoresString, JsonArray.class);
+		} catch (JsonSyntaxException e) {
+			System.err.println("Error al convertir jugadores a JsonArray: " + e.getMessage());
+			return;
+		}
+
+		loadMessage.add("jugadores", jugadoresJson);
+
+		// ✅ Enviar los datos a todos los jugadores conectados
 		for (Player player : players.values()) {
 			if (player.getSession().isOpen()) {
-				System.out.println("mensaje:" + loadMessage.toString());
 				NotificationHelper.sendMessage(player.getSession(), loadMessage.toString());
 			}
 		}
 	}
 
-	public void handleGameSelection(Session senderSession, String data, Map<String, Player> players, Set<Session> sessions) {
-	    JsonObject playerSelection = new Gson().fromJson(data, JsonObject.class);
-	    String selectedOption = playerSelection.get("option").getAsString();
+	public void handleGameSelection(Session senderSession, String data, Map<String, Player> players,
+			Set<Session> sessions) {
+		JsonObject playerSelection = new Gson().fromJson(data, JsonObject.class);
+		String selectedOption = playerSelection.get("option").getAsString();
 
-	    JsonObject selectionMessage = new JsonObject();
-	    selectionMessage.addProperty("action", ServerEvents.SELECCION_JUEGO);
-	    selectionMessage.addProperty("option", selectedOption);
+		JsonObject selectionMessage = new JsonObject();
+		selectionMessage.addProperty("action", ServerEvents.SELECCION_JUEGO);
+		selectionMessage.addProperty("option", selectedOption);
 
-	    for (Session session : sessions) {
-	        if (session.isOpen() && !session.equals(senderSession)) {
-	            NotificationHelper.sendMessage(session, selectionMessage.toString());
-	        }
-	    }
+		for (Session session : sessions) {
+			if (session.isOpen() && !session.equals(senderSession)) {
+				NotificationHelper.sendMessage(session, selectionMessage.toString());
+			}
+		}
 	}
 
 	public void confirmGameSelection(Session senderSession, String data, Map<String, Player> players,
