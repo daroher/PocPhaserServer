@@ -16,6 +16,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 
 import dao.DAOPartida;
+import dao.IDAOPartida;
 import logica.AvionBritanico;
 import logica.Bismarck;
 import logica.Francia;
@@ -40,7 +41,7 @@ public class GameStateService {
 
 	private final Gson gson = new Gson();
 	private final Map<String, PartidaData> partialSaves = new ConcurrentHashMap<>();
-	private DAOPartida daoPartida = new DAOPartida(); 
+	private IDAOPartida daoPartida = new DAOPartida(); 
 
 	private Partida crearPartidaCompleta(PartidaData data) {
 		Partida partida = new Partida();
