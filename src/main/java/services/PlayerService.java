@@ -73,7 +73,7 @@ public class PlayerService {
 					Math.pow(player.getX() - otherPlayer.getX(), 2) + Math.pow(player.getY() - otherPlayer.getY(), 2));
 
 			// Si está dentro del rango de visión
-			if (distance != 0 && distance <= player.getVisionRadius() && player.isPlaneActive()) {
+			if (distance != 0 && distance <= player.getVisionRadius()) {
 				if (!player.isInVisionRangeOf(otherPlayer)) {
 					player.setInVisionRangeOf(otherPlayer, true);
 					notifyPlayerInRange(player, otherPlayer);
@@ -86,7 +86,7 @@ public class PlayerService {
 			}
 
 			// Verificar la visión inversa
-			if (distance != 0 && distance <= otherPlayer.getVisionRadius() && player.isPlaneActive()) {
+			if (distance != 0 && distance <= otherPlayer.getVisionRadius()) {
 				if (!otherPlayer.isInVisionRangeOf(player)) {
 					otherPlayer.setInVisionRangeOf(player, true);
 					notifyPlayerInRange(otherPlayer, player);
@@ -102,19 +102,17 @@ public class PlayerService {
 
 	private void notifyPlayerInRange(Player observer, Player target) {
 		try {
+			double distance = Math
+					.sqrt(Math.pow(observer.getX() - target.getX(), 2) + Math.pow(observer.getY() - target.getY(), 2));
+
 			JsonObject messageInRange = new JsonObject();
 			messageInRange.addProperty("action", ServerEvents.JUGADOR_EN_RANGO);
 			messageInRange.addProperty("x", target.getX());
 			messageInRange.addProperty("y", target.getY());
 			messageInRange.addProperty("team", target.getTeam());
 			messageInRange.addProperty("angle", target.getAngle());
-			messageInRange.addProperty("distance", Math
-					.sqrt(Math.pow(observer.getX() - target.getX(), 2) + Math.pow(observer.getY() - target.getY(), 2)));
+			messageInRange.addProperty("distance", distance);
 			NotificationHelper.sendMessage(observer.getSession(), messageInRange.toString());
-
-			System.out.println("player:" + observer.getTeam() + "- observer:" + target.isWithObserver());
-			
-			
 
 			JsonObject bismarckPos = new JsonObject();
 			if (observer.isWithOperator()) {
@@ -126,32 +124,37 @@ public class PlayerService {
 				bismarckPos.addProperty("y", observer.getY());
 				this.bismarckLastPos = bismarckPos;
 			}
-			
-			// Si el bismrack lo vio, no esta en enfriamiento de ventaja y el avion no tenia
-			// observador, entonces es ventaja para bismarck
-			long currentTime = System.currentTimeMillis();
-	        if (observer.getTeam().equals("bismarck") && !target.isWithObserver() 
-	                && (currentTime - lastAdvantageTime >= ADVANTAGE_COOLDOWN_MS)) {
 
-	            lastAdvantageTime = currentTime; // Actualizar el tiempo de última activación
-	            
-				JsonObject messageVentaja = new JsonObject();
-				messageVentaja.addProperty("action", ServerEvents.INICIA_VENTAJA);
-				messageVentaja.addProperty("startTeam", observer.getTeam());
-				messageVentaja.addProperty("otherTeam", target.getTeam());
-				messageVentaja.addProperty("distance", Math.sqrt(
-						Math.pow(observer.getX() - target.getX(), 2) + Math.pow(observer.getY() - target.getY(), 2)));
-				NotificationHelper.sendMessage(observer.getSession(), messageVentaja.toString());
-				NotificationHelper.sendMessage(target.getSession(), messageVentaja.toString());
-			} else if ((observer.getTeam().equals("britanicos") && observer.isWithObserver())
-					|| (observer.getTeam().equals("bismarck") && target.isWithObserver())) {
-				System.out.println("Guerra");
+			if (observer.getTeam().equals("bismarck")) {
+				boolean bismarckUsedAdvantage = observer.hasBismarckUsedAdvantage();
+
+				if (!bismarckUsedAdvantage && !target.isWithObserver()) {
+					JsonObject messageVentaja = new JsonObject();
+					messageVentaja.addProperty("action", ServerEvents.INICIA_VENTAJA);
+					messageVentaja.addProperty("startTeam", observer.getTeam());
+					messageVentaja.addProperty("otherTeam", target.getTeam());
+					messageVentaja.addProperty("distance", distance);
+					NotificationHelper.sendMessage(observer.getSession(), messageVentaja.toString());
+					NotificationHelper.sendMessage(target.getSession(), messageVentaja.toString());
+
+					observer.setBismarckUsedAdvantage(true);
+				} else if (bismarckUsedAdvantage) {
+
+					JsonObject guerraMessage = new JsonObject();
+					guerraMessage.addProperty("action", ServerEvents.INICIA_GUERRA);
+					guerraMessage.addProperty("startTeam", observer.getTeam());
+					guerraMessage.addProperty("otherTeam", target.getTeam());
+					guerraMessage.addProperty("distance", distance);
+					NotificationHelper.sendMessage(observer.getSession(), guerraMessage.toString());
+					NotificationHelper.sendMessage(target.getSession(), guerraMessage.toString());
+				}
+			} else if (observer.getTeam().equals("britanicos") && observer.isWithObserver()
+					&& observer.isPlaneActive()) {
 				JsonObject guerraMessage = new JsonObject();
 				guerraMessage.addProperty("action", ServerEvents.INICIA_GUERRA);
 				guerraMessage.addProperty("startTeam", observer.getTeam());
 				guerraMessage.addProperty("otherTeam", target.getTeam());
-				guerraMessage.addProperty("distance", Math.sqrt(
-						Math.pow(observer.getX() - target.getX(), 2) + Math.pow(observer.getY() - target.getY(), 2)));
+				guerraMessage.addProperty("distance", distance);
 				NotificationHelper.sendMessage(observer.getSession(), guerraMessage.toString());
 				NotificationHelper.sendMessage(target.getSession(), guerraMessage.toString());
 			}
@@ -261,7 +264,6 @@ public class PlayerService {
 					int currentPlanes = GameStateService.getInstance().getCantAviones();
 					if (currentPlanes > 0) {
 						GameStateService.getInstance().setCantAviones(currentPlanes - 1);
-						
 
 						if (GameStateService.getInstance().getCantAviones() == 0) {
 							GameStateService.getInstance().checkVictory(sessions, players);

@@ -8,6 +8,7 @@ public class AvionBritanico extends ElementoJuego {
 	private String estado;
 	private int defaultSpeed;
 	private Arma arma;
+	float fuelAmount;
 
 	public AvionBritanico(float posX, float posY, float angle, String estado) {
 		super(posX, posY, angle);
@@ -81,6 +82,14 @@ public class AvionBritanico extends ElementoJuego {
 			arma.setEstado("Sin balas");
 			this.setEstado("Sin balas");
 		}
+	}
+
+	public float getFuelAmount() {
+		return fuelAmount;
+	}
+
+	public void setFuelAmount(float fuelAmount) {
+		this.fuelAmount = fuelAmount;
 	}
 
 }
