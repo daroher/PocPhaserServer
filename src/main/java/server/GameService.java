@@ -9,8 +9,9 @@ import java.util.Set;
 import javax.websocket.Session;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 
-import logica.GameEvent;
 import logica.Player;
 import services.CombatService;
 import services.ConnectionService;
@@ -18,6 +19,7 @@ import services.GameStateService;
 import services.PlayerService;
 import utils.NotificationHelper;
 import utils.ServerEvents;
+import vo.GameEvent;
 
 public class GameService {
 	private static final Gson gson = new Gson();
@@ -51,7 +53,7 @@ public class GameService {
 		try {
 			GameEvent playerEvent = gson.fromJson(message, GameEvent.class);
 			if (playerEvent == null || playerEvent.getAction() == null) {
-				System.err.println("Error: mensaje inválido.");
+				System.err.println("Error: mensaje inválido." + message);
 				return;
 			}
 			messageReducer(playerEvent.getAction(), senderSession, message);
@@ -72,6 +74,28 @@ public class GameService {
 		case ServerEvents.NUEVO_JUGADOR:
 			playerService.handleNewPlayer(senderSession, data, sessions, players);
 			break;
+		case ServerEvents.JUGADORES_ACTUALES:
+		    System.out.println("[Servidor] Enviando lista de jugadores actuales.");
+
+		    JsonObject mensaje = new JsonObject();
+		    mensaje.addProperty("action", ServerEvents.JUGADORES_ACTUALES);
+		    
+		    JsonArray jugadoresJson = new JsonArray();
+		    for (Player p : players.values()) {
+		        JsonObject jugador = new JsonObject();
+		        jugador.addProperty("team", p.getTeam());
+		        jugadoresJson.add(jugador);
+		    }
+		    mensaje.add("jugadores", jugadoresJson);
+
+		 // Enviar la lista de jugadores a todos los clientes conectados
+		    for (Session session : sessions) {
+		        if (session.isOpen()) {
+		            NotificationHelper.sendMessage(session, mensaje.toString());
+		        }
+		    }
+		    
+		    break;
 		case ServerEvents.MUEVO_JUGADOR:
 			playerService.handleMovePlayer(senderSession, data, players);
 			break;
@@ -117,12 +141,32 @@ public class GameService {
 		case ServerEvents.REANUDAR_JUEGO:
 			gameStateService.resumeGame(players);
 			break;
+		case ServerEvents.SOLICITAR_GUARDAR_JUEGO:
+			gameStateService.requestSaveGame(players);
+			break;
 		case ServerEvents.GUARDAR_JUEGO:
-			gameStateService.saveGame(players);
+			gameStateService.saveGame(players, data);
 			break;
-		case ServerEvents.CARGAR_JUEGO:
-			gameStateService.loadGame(players);
+		case ServerEvents.SOLICITAR_CARGAR_JUEGO:
+			gameStateService.requestLoadGame(players);
 			break;
+		case ServerEvents.SELECCION_JUEGO:
+		    gameStateService.handleGameSelection(senderSession, data, players, sessions);
+		    break;
+		case ServerEvents.CONFIRMAR_JUEGO:
+		    gameStateService.confirmGameSelection(senderSession, data, players, sessions);
+		    break;
+		case ServerEvents.SALIR_JUEGO:
+		    // Se reenvía a todas las sesiones
+		    JsonObject exitMessage = new JsonObject();
+		    exitMessage.addProperty("action", ServerEvents.SALIR_JUEGO);
+		    for (Session session : sessions) {
+		        if (session.isOpen()) {
+		            NotificationHelper.sendMessage(session, exitMessage.toString());
+		        }
+		    }
+		    break;
+
 		default:
 			System.err.println("Acción no reconocida: " + action);
 			break;

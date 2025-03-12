@@ -5,6 +5,10 @@ public abstract class ElementoJuego {
 	private float posY;
 	private float angle;
 
+	public ElementoJuego() {
+		super();
+	}
+
 	public ElementoJuego(float posX, float posY, float angle) {
 		this.posX = posX;
 		this.posY = posY;
@@ -34,6 +38,8 @@ public abstract class ElementoJuego {
 	public void setAngle(float angle) {
 		this.angle = angle;
 	}
+
+	public abstract float getSpeed();
 
 	public abstract float getVisionRadius();
 

@@ -1,14 +1,14 @@
-package logica;
+package vo;
 
-public abstract class GameElement {
-	private float posX;
-	private float posY;
-	private float angle;
+public class PortavionData {
 
-	public GameElement(float posX, float posY, float angle) {
-		this.posX = posX;
-		this.posY = posY;
-		this.angle = angle;
+	float posX;
+	float posY;
+	float angle;
+	int avionesDisponibles;
+
+	public PortavionData() {
+		super();
 	}
 
 	public float getPosX() {
@@ -35,7 +35,11 @@ public abstract class GameElement {
 		this.angle = angle;
 	}
 
-	public abstract float getSpeed();
+	public int getAvionesDisponibles() {
+		return avionesDisponibles;
+	}
 
-	public abstract int getVisionRadius();
+	public void setAvionesDisponibles(int avionesDisponibles) {
+		this.avionesDisponibles = avionesDisponibles;
+	}
 }
