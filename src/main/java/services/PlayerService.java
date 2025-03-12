@@ -240,9 +240,9 @@ public class PlayerService {
 				responseMessage.addProperty("action", ServerEvents.DATOS_POSICION_BISMARCK);
 				responseMessage.addProperty("x", bismarckLastPos.get("x").getAsFloat());
 				responseMessage.addProperty("y", bismarckLastPos.get("y").getAsFloat());
+				bismarckLastPos = null;
 
 				NotificationHelper.sendMessage(senderSession, responseMessage.toString());
-				bismarckLastPos = null;
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
