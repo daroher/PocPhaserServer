@@ -73,7 +73,7 @@ public class PlayerService {
 					Math.pow(player.getX() - otherPlayer.getX(), 2) + Math.pow(player.getY() - otherPlayer.getY(), 2));
 
 			// Si está dentro del rango de visión
-			if (distance != 0 && distance <= player.getVisionRadius() && player.isPlaneActive()) {
+			if (distance != 0 && distance <= player.getVisionRadius()) {
 				if (!player.isInVisionRangeOf(otherPlayer)) {
 					player.setInVisionRangeOf(otherPlayer, true);
 					notifyPlayerInRange(player, otherPlayer);
@@ -86,7 +86,7 @@ public class PlayerService {
 			}
 
 			// Verificar la visión inversa
-			if (distance != 0 && distance <= otherPlayer.getVisionRadius() && player.isPlaneActive()) {
+			if (distance != 0 && distance <= otherPlayer.getVisionRadius()) {
 				if (!otherPlayer.isInVisionRangeOf(player)) {
 					otherPlayer.setInVisionRangeOf(player, true);
 					notifyPlayerInRange(otherPlayer, player);
@@ -112,10 +112,7 @@ public class PlayerService {
 					.sqrt(Math.pow(observer.getX() - target.getX(), 2) + Math.pow(observer.getY() - target.getY(), 2)));
 			NotificationHelper.sendMessage(observer.getSession(), messageInRange.toString());
 
-			System.out.println("player:" + observer.getTeam() + "- observer:" + target.isWithObserver());
-			
-			
-
+		
 			JsonObject bismarckPos = new JsonObject();
 			if (observer.isWithOperator()) {
 				bismarckPos.addProperty("x", target.getX());
@@ -143,9 +140,8 @@ public class PlayerService {
 						Math.pow(observer.getX() - target.getX(), 2) + Math.pow(observer.getY() - target.getY(), 2)));
 				NotificationHelper.sendMessage(observer.getSession(), messageVentaja.toString());
 				NotificationHelper.sendMessage(target.getSession(), messageVentaja.toString());
-			} else if ((observer.getTeam().equals("britanicos") && observer.isWithObserver())
-					|| (observer.getTeam().equals("bismarck") && target.isWithObserver())) {
-				System.out.println("Guerra");
+			} else if ((observer.getTeam().equals("britanicos") && observer.isWithObserver() && observer.isPlaneActive())
+					|| (observer.getTeam().equals("bismarck") && target.isWithObserver() && target.isPlaneActive())) {
 				JsonObject guerraMessage = new JsonObject();
 				guerraMessage.addProperty("action", ServerEvents.INICIA_GUERRA);
 				guerraMessage.addProperty("startTeam", observer.getTeam());
