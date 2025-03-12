@@ -67,18 +67,27 @@ public class GameStateService {
 		// Crear jugador Británicos
 		Jugador jugadorBritanicos = new Jugador();
 		if (data.getBritanicosData().getAvionActivo() != null
-				&& "Funcional".equals(data.getBritanicosData().getAvionActivo().getEstado())) {
-			AvionBritanico avion = new AvionBritanico(data.getBritanicosData().getX(), data.getBritanicosData().getY(),
-					data.getBritanicosData().getAngle(), data.getBritanicosData().getAvionActivo().getEstado());
-			avion.setTripulantes(convertirTripulantes(data.getBritanicosData().getAvionActivo().getTripulantes()));
-			jugadorBritanicos.setElementoJuego(avion);
+		        && "Funcional".equals(data.getBritanicosData().getAvionActivo().getEstado())) {
+		    AvionBritanico avion = new AvionBritanico(
+		        data.getBritanicosData().getX(), 
+		        data.getBritanicosData().getY(),
+		        data.getBritanicosData().getAngle(), 
+		        data.getBritanicosData().getAvionActivo().getEstado()
+		    );
+		    avion.setTripulantes(convertirTripulantes(data.getBritanicosData().getAvionActivo().getTripulantes()));
+		    // NUEVO: asignar el fuelAmount al avión
+		    avion.setFuelAmount(data.getBritanicosData().getAvionActivo().getFuelAmount());
+		    jugadorBritanicos.setElementoJuego(avion);
 		} else {
-			Portavion portavion = new Portavion(data.getBritanicosData().getPortavion().getPosX(),
-					data.getBritanicosData().getPortavion().getPosY(),
-					data.getBritanicosData().getPortavion().getAngle());
-			portavion.setCantAviones(data.getBritanicosData().getPortavion().getAvionesDisponibles());
-			jugadorBritanicos.setElementoJuego(portavion);
+		    Portavion portaviones = new Portavion(
+		        data.getBritanicosData().getPortavion().getPosX(),
+		        data.getBritanicosData().getPortavion().getPosY(),
+		        data.getBritanicosData().getPortavion().getAngle()
+		    );
+		    portaviones.setCantAviones(data.getBritanicosData().getPortavion().getAvionesDisponibles());
+		    jugadorBritanicos.setElementoJuego(portaviones);
 		}
+		
 		jugadorBritanicos.setEquipo("BRITANICOS");
 
 		List<Jugador> jugadores = new ArrayList<>();
