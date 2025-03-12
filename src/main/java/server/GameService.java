@@ -9,6 +9,7 @@ import java.util.Set;
 import javax.websocket.Session;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
 import logica.Player;
@@ -73,6 +74,28 @@ public class GameService {
 		case ServerEvents.NUEVO_JUGADOR:
 			playerService.handleNewPlayer(senderSession, data, sessions, players);
 			break;
+		case ServerEvents.JUGADORES_ACTUALES:
+		    System.out.println("[Servidor] Enviando lista de jugadores actuales.");
+
+		    JsonObject mensaje = new JsonObject();
+		    mensaje.addProperty("action", ServerEvents.JUGADORES_ACTUALES);
+		    
+		    JsonArray jugadoresJson = new JsonArray();
+		    for (Player p : players.values()) {
+		        JsonObject jugador = new JsonObject();
+		        jugador.addProperty("team", p.getTeam());
+		        jugadoresJson.add(jugador);
+		    }
+		    mensaje.add("jugadores", jugadoresJson);
+
+		 // Enviar la lista de jugadores a todos los clientes conectados
+		    for (Session session : sessions) {
+		        if (session.isOpen()) {
+		            NotificationHelper.sendMessage(session, mensaje.toString());
+		        }
+		    }
+		    
+		    break;
 		case ServerEvents.MUEVO_JUGADOR:
 			playerService.handleMovePlayer(senderSession, data, players);
 			break;
