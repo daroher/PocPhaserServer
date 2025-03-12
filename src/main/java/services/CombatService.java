@@ -35,14 +35,7 @@ public class CombatService {
 
 			for (Player player : players.values()) {
 				JsonObject message = new JsonObject();
-				if(player.getTeam() == "britanicos") {
-					player.setIsPlaneActive(false);
-				}else {
-					player.setBismarckUsedAdvantage(false);
-				}
-				
 				if ("bismarck".equals(shootEvent.getTeam())) {
-
 					message.addProperty("action", ServerEvents.AVION_ELIMINADO);
 					message.addProperty("cantAviones", GameStateService.getInstance().getCantAviones());
 				} else {

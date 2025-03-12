@@ -16,11 +16,6 @@ public class Player {
 	private boolean withObserver;
 	private boolean withOperator;
 	private boolean isPlaneActive;
-	private boolean bismarckUsedAdvantage;
-
-	public Player() {
-		super();
-	}
 
 	public Player(String id, String team, float x, float y, float visionRadius, Session session, float angle) {
 		this.team = team;
@@ -29,7 +24,8 @@ public class Player {
 		this.visionRadius = visionRadius;
 		this.session = session;
 		this.angle = angle;
-		this.bismarckUsedAdvantage = false;
+		this.withObserver = withObserver;
+		this.withOperator = withOperator;
 	}
 
 	public String getTeam() {
@@ -96,21 +92,13 @@ public class Player {
 	public void setWithOperator(boolean withOperator) {
 		this.withOperator = withOperator;
 	}
-
+	
 	public boolean isPlaneActive() {
 		return this.isPlaneActive;
 	}
 
 	public void setIsPlaneActive(boolean isPlaneActive) {
 		this.isPlaneActive = isPlaneActive;
-	}
-
-	public boolean hasBismarckUsedAdvantage() {
-	    return this.bismarckUsedAdvantage;
-	}
-
-	public void setBismarckUsedAdvantage(boolean value) {
-	    this.bismarckUsedAdvantage = value;
 	}
 
 }

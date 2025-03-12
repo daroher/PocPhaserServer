@@ -12,7 +12,7 @@ import logica.Francia;
 import logica.Partida;
 import utils.Consultas;
 
-public class DAOPartida implements IDAOPartida{
+public class DAOPartida {
 	
 	public void guardarPartidaEnBD(Connection con, Partida partida) {
 	    Consultas cons = new Consultas();
